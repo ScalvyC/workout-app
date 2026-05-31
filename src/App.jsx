@@ -28,12 +28,15 @@ function ex(name, sets, reps, rest, type) {
 }
 
 const WARM_UP = [
-  ["Arm circles", "30 sec"],
-  ["Hip circles", "30 sec"],
-  ["Bodyweight squats", "30 sec"],
-  ["Shoulder taps", "30 sec"],
-  ["Glute bridges", "30 sec"],
-  ["Easy incline push-ups", "30 sec"]
+  ["Neck rolls + shoulder rolls", "45 sec"],
+  ["Arm circles, forward and backward", "45 sec"],
+  ["Hip circles", "45 sec"],
+  ["Bodyweight squats, slow and controlled", "45 sec"],
+  ["Glute bridges", "45 sec"],
+  ["Shoulder taps", "45 sec"],
+  ["World’s greatest stretch or hip flexor stretch", "1 min"],
+  ["Easy incline push-ups", "45 sec"],
+  ["Light jumping jacks or marching in place", "45 sec"]
 ];
 
 const PLAN = {
@@ -495,32 +498,299 @@ VITE_SUPABASE_ANON_KEY=your_anon_key`}
 }
 
 function MiniAnimation({ type, playing, compact = false }) {
+  const loop = playing
+    ? { duration: 1.2, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }
+    : { duration: 0.2 };
+
   const isFloor = ["pushup", "floorPress", "bodyRow", "plank", "gluteBridge", "deadBug"].includes(type);
   const isHinge = ["row", "rdl", "lunge", "stepUp", "reverseFly"].includes(type);
+  const isStanding = !isFloor && !isHinge;
+
+  function SmallDumbbell({ x, y }) {
+    return (
+      <g transform={`translate(${x} ${y})`}>
+        <line x1="-9" y1="0" x2="9" y2="0" stroke="#34d399" strokeWidth="4" strokeLinecap="round" />
+        <rect x="-15" y="-7" width="7" height="14" rx="2" fill="#34d399" />
+        <rect x="8" y="-7" width="7" height="14" rx="2" fill="#34d399" />
+      </g>
+    );
+  }
+
+  function MotionGuide({ x = 150, y1 = 80, y2 = 130 }) {
+    return (
+      <motion.line
+        x1={x}
+        y1={y1}
+        x2={x}
+        y2={y2}
+        stroke="#34d399"
+        strokeWidth="5"
+        strokeLinecap="round"
+        strokeDasharray="8 8"
+        animate={{ opacity: [0.35, 1, 0.35] }}
+        transition={{ duration: 1, repeat: Infinity }}
+      />
+    );
+  }
+
+  function StandingDemo() {
+    const isSquat = type === "squat";
+    const isPress = type === "press";
+    const isCurl = type === "curl";
+    const isCalfRaise = type === "calfRaise";
+    const isLateralRaise = type === "lateralRaise";
+    const isStretch = type === "stretch";
+
+    const bodyMove = isSquat ? [0, 22, 0] : isCalfRaise ? [0, -10, 0] : 0;
+
+    const leftHand = isPress
+      ? { x: [108, 108, 108], y: [120, 58, 120] }
+      : isCurl
+        ? { x: [103, 120, 103], y: [155, 112, 155] }
+        : isLateralRaise || isStretch
+          ? { x: [103, 62, 103], y: [155, 110, 155] }
+          : { x: 103, y: 155 };
+
+    const rightHand = isPress
+      ? { x: [192, 192, 192], y: [120, 58, 120] }
+      : isCurl
+        ? { x: [197, 180, 197], y: [155, 112, 155] }
+        : isLateralRaise || isStretch
+          ? { x: [197, 238, 197], y: [155, 110, 155] }
+          : { x: 197, y: 155 };
+
+    return (
+      <motion.g animate={{ y: bodyMove }} transition={loop}>
+        <circle cx="150" cy="48" r="17" fill="white" />
+        <line x1="150" y1="68" x2="150" y2="145" stroke="white" strokeWidth="13" strokeLinecap="round" />
+
+        <line x1="150" y1="86" x2="108" y2="120" stroke="white" strokeWidth="12" strokeLinecap="round" />
+        <line x1="150" y1="86" x2="192" y2="120" stroke="white" strokeWidth="12" strokeLinecap="round" />
+
+        <motion.line
+          x1="108"
+          y1="120"
+          x2="103"
+          y2="155"
+          stroke="white"
+          strokeWidth="12"
+          strokeLinecap="round"
+          animate={{ x2: leftHand.x, y2: leftHand.y }}
+          transition={loop}
+        />
+
+        <motion.line
+          x1="192"
+          y1="120"
+          x2="197"
+          y2="155"
+          stroke="white"
+          strokeWidth="12"
+          strokeLinecap="round"
+          animate={{ x2: rightHand.x, y2: rightHand.y }}
+          transition={loop}
+        />
+
+        {(isPress || isCurl || isLateralRaise) && (
+          <>
+            <motion.g animate={{ x: leftHand.x, y: leftHand.y }} transition={loop}>
+              <SmallDumbbell x={0} y={0} />
+            </motion.g>
+            <motion.g animate={{ x: rightHand.x, y: rightHand.y }} transition={loop}>
+              <SmallDumbbell x={0} y={0} />
+            </motion.g>
+          </>
+        )}
+
+        {isSquat && <SmallDumbbell x={150} y={125} />}
+
+        <motion.line
+          x1="150"
+          y1="145"
+          x2="112"
+          y2="235"
+          stroke="white"
+          strokeWidth="13"
+          strokeLinecap="round"
+          animate={{ x2: isSquat ? [112, 90, 112] : 112, y2: isCalfRaise ? [235, 220, 235] : 235 }}
+          transition={loop}
+        />
+
+        <motion.line
+          x1="150"
+          y1="145"
+          x2="188"
+          y2="235"
+          stroke="white"
+          strokeWidth="13"
+          strokeLinecap="round"
+          animate={{ x2: isSquat ? [188, 210, 188] : 188, y2: isCalfRaise ? [235, 220, 235] : 235 }}
+          transition={loop}
+        />
+
+        <MotionGuide x={150} y1={80} y2={135} />
+      </motion.g>
+    );
+  }
+
+  function FloorDemo() {
+    const isPushup = type === "pushup";
+    const isFloorPress = type === "floorPress";
+    const isBodyRow = type === "bodyRow";
+    const isPlank = type === "plank";
+    const isGluteBridge = type === "gluteBridge";
+    const isDeadBug = type === "deadBug";
+
+    if (isFloorPress) {
+      return (
+        <g>
+          <circle cx="80" cy="205" r="17" fill="white" />
+          <line x1="100" y1="210" x2="205" y2="210" stroke="white" strokeWidth="13" strokeLinecap="round" />
+
+          <motion.line x1="125" y1="202" x2="125" y2="145" stroke="white" strokeWidth="12" strokeLinecap="round" animate={{ y2: [145, 72, 145] }} transition={loop} />
+          <motion.line x1="165" y1="202" x2="165" y2="145" stroke="white" strokeWidth="12" strokeLinecap="round" animate={{ y2: [145, 72, 145] }} transition={loop} />
+
+          <motion.g animate={{ y: [145, 72, 145] }} transition={loop}>
+            <SmallDumbbell x={125} y={0} />
+            <SmallDumbbell x={165} y={0} />
+          </motion.g>
+
+          <line x1="205" y1="210" x2="254" y2="235" stroke="white" strokeWidth="13" strokeLinecap="round" />
+          <MotionGuide x={145} y1={78} y2={140} />
+        </g>
+      );
+    }
+
+    if (isGluteBridge) {
+      return (
+        <g>
+          <circle cx="78" cy="220" r="17" fill="white" />
+          <line x1="96" y1="225" x2="135" y2="225" stroke="white" strokeWidth="13" strokeLinecap="round" />
+          <motion.line x1="135" y1="225" x2="190" y2="225" stroke="white" strokeWidth="13" strokeLinecap="round" animate={{ y2: [225, 178, 225] }} transition={loop} />
+          <line x1="190" y1="225" x2="246" y2="235" stroke="white" strokeWidth="13" strokeLinecap="round" />
+          <MotionGuide x={165} y1={175} y2={225} />
+        </g>
+      );
+    }
+
+    if (isDeadBug) {
+      return (
+        <g>
+          <circle cx="150" cy="205" r="17" fill="white" />
+          <line x1="150" y1="188" x2="150" y2="135" stroke="white" strokeWidth="13" strokeLinecap="round" />
+
+          <motion.line x1="150" y1="150" x2="105" y2="90" stroke="white" strokeWidth="12" strokeLinecap="round" animate={{ x2: [105, 70, 105], y2: [90, 60, 90] }} transition={loop} />
+          <motion.line x1="150" y1="150" x2="195" y2="90" stroke="white" strokeWidth="12" strokeLinecap="round" animate={{ x2: [195, 230, 195], y2: [90, 60, 90] }} transition={loop} />
+
+          <motion.line x1="150" y1="135" x2="105" y2="230" stroke="white" strokeWidth="12" strokeLinecap="round" animate={{ x2: [105, 75, 105], y2: [230, 248, 230] }} transition={loop} />
+          <motion.line x1="150" y1="135" x2="195" y2="230" stroke="white" strokeWidth="12" strokeLinecap="round" animate={{ x2: [195, 225, 195], y2: [230, 248, 230] }} transition={loop} />
+        </g>
+      );
+    }
+
+    return (
+      <motion.g animate={{ y: isPushup ? [0, 25, 0] : isBodyRow ? [18, -14, 18] : 0 }} transition={loop}>
+        {isBodyRow && <line x1="48" y1="92" x2="252" y2="92" stroke="#34d399" strokeWidth="10" strokeLinecap="round" />}
+
+        <circle cx="70" cy="155" r="17" fill="white" />
+        <line x1="88" y1="160" x2="195" y2="172" stroke="white" strokeWidth="13" strokeLinecap="round" />
+
+        <line x1="105" y1="170" x2={isBodyRow ? "108" : "95"} y2={isBodyRow ? "92" : "235"} stroke="white" strokeWidth="12" strokeLinecap="round" />
+        <line x1="145" y1="174" x2="145" y2={isBodyRow ? "92" : "235"} stroke="white" strokeWidth="12" strokeLinecap="round" />
+
+        <line x1="195" y1="172" x2="260" y2="235" stroke="white" strokeWidth="13" strokeLinecap="round" />
+
+        {isPlank && <text x="118" y="105" fill="#34d399" fontSize="20" fontWeight="900">HOLD</text>}
+        {!isPlank && <MotionGuide x={150} y1={110} y2={165} />}
+      </motion.g>
+    );
+  }
+
+  function HingeDemo() {
+    const isRow = type === "row";
+    const isReverseFly = type === "reverseFly";
+    const isRdl = type === "rdl";
+    const isLunge = type === "lunge";
+    const isStepUp = type === "stepUp";
+
+    return (
+      <g>
+        {isStepUp && <rect x="195" y="220" width="72" height="32" rx="6" fill="rgba(52,211,153,.45)" />}
+
+        <motion.g animate={{ y: isLunge || isStepUp ? [0, 22, 0] : 0 }} transition={loop}>
+          <motion.circle
+            cx="112"
+            cy="68"
+            r="17"
+            fill="white"
+            animate={{ cx: isRow || isRdl || isReverseFly ? [112, 95, 112] : 112, cy: isRow || isRdl || isReverseFly ? [68, 105, 68] : 68 }}
+            transition={loop}
+          />
+
+          <motion.line
+            x1="125"
+            y1="88"
+            x2="170"
+            y2="150"
+            stroke="white"
+            strokeWidth="13"
+            strokeLinecap="round"
+            animate={{
+              x1: isRow || isRdl || isReverseFly ? [125, 105, 125] : 125,
+              y1: isRow || isRdl || isReverseFly ? [88, 120, 88] : 88,
+              x2: isRow || isRdl || isReverseFly ? [170, 190, 170] : 170,
+              y2: isRow || isRdl || isReverseFly ? [150, 160, 150] : 150
+            }}
+            transition={loop}
+          />
+
+          <motion.line
+            x1="135"
+            y1="108"
+            x2="108"
+            y2="175"
+            stroke="white"
+            strokeWidth="12"
+            strokeLinecap="round"
+            animate={{
+              x2: isRow ? [108, 185, 108] : isReverseFly ? [108, 70, 108] : isRdl ? [108, 130, 108] : 108,
+              y2: isRow || isReverseFly ? [175, 140, 175] : isRdl ? [175, 215, 175] : 175
+            }}
+            transition={loop}
+          />
+
+          {(isRow || isRdl || isReverseFly) && (
+            <motion.g
+              animate={{
+                x: isRow ? [108, 185, 108] : isReverseFly ? [108, 70, 108] : [108, 130, 108],
+                y: isRow || isReverseFly ? [175, 140, 175] : [175, 215, 175]
+              }}
+              transition={loop}
+            >
+              <SmallDumbbell x={0} y={0} />
+            </motion.g>
+          )}
+
+          <motion.line x1="170" y1="150" x2="120" y2="245" stroke="white" strokeWidth="13" strokeLinecap="round" animate={{ x2: isStepUp ? [120, 202, 120] : isLunge ? [120, 92, 120] : 120 }} transition={loop} />
+          <motion.line x1="170" y1="150" x2="220" y2="245" stroke="white" strokeWidth="13" strokeLinecap="round" animate={{ x2: isStepUp ? [220, 248, 220] : isLunge ? [220, 250, 220] : 220 }} transition={loop} />
+
+          <MotionGuide x={155} y1={95} y2={155} />
+        </motion.g>
+      </g>
+    );
+  }
 
   return (
     <div className="overflow-hidden rounded-3xl border border-white/10 bg-slate-950">
-      <div className={`${compact ? "h-56" : "h-[320px] md:h-[420px]"} relative flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800`}>
-        <motion.div
-          className="relative h-40 w-40"
-          animate={playing ? { y: isFloor ? [0, 18, 0] : isHinge ? [0, 10, 0] : [0, -12, 0] } : { y: 0 }}
-          transition={{ duration: 1.2, repeat: playing ? Infinity : 0, ease: "easeInOut" }}
-        >
-          <div className="absolute left-1/2 top-0 h-10 w-10 -translate-x-1/2 rounded-full bg-white" />
-          <div className={`absolute rounded-full bg-white ${isFloor ? "left-8 top-16 h-5 w-28" : isHinge ? "left-14 top-12 h-20 w-5 rotate-45" : "left-[70px] top-10 h-20 w-5"}`} />
-          <div className="absolute left-9 top-24 h-4 w-24 rounded-full bg-white" />
-          <div className="absolute left-5 top-32 h-4 w-28 rounded-full bg-white" />
-          {!["pushup", "plank", "bodyRow", "deadBug", "gluteBridge", "stretch"].includes(type) && (
-            <>
-              <div className="absolute left-2 top-20 h-5 w-8 rounded bg-emerald-400" />
-              <div className="absolute right-2 top-20 h-5 w-8 rounded bg-emerald-400" />
-            </>
-          )}
-        </motion.div>
+      <div className={`${compact ? "h-56" : "h-[320px] md:h-[420px]"} relative bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800`}>
+        <svg viewBox="0 0 300 280" className="h-full w-full">
+          <line x1="35" y1="252" x2="265" y2="252" stroke="rgba(255,255,255,.2)" strokeWidth="5" strokeLinecap="round" />
+          {isFloor ? <FloorDemo /> : isHinge ? <HingeDemo /> : isStanding ? <StandingDemo /> : <StandingDemo />}
+        </svg>
 
         {!compact && (
           <div className="absolute bottom-4 left-4 right-4 rounded-2xl border border-white/10 bg-slate-950/80 p-3">
-            <p className="text-sm font-bold text-white">{DEMO_TEXT[type]}</p>
+            <p className="text-sm font-bold text-white">{DEMO_TEXT[type] || "Move slowly and stay controlled."}</p>
           </div>
         )}
       </div>
@@ -602,7 +872,7 @@ function ExerciseInstructions({ exercise }) {
 function WarmUpCard() {
   return (
     <div className="rounded-[2rem] border border-white/10 bg-slate-900 p-5">
-      <h3 className="font-black text-white">3-minute warm-up</h3>
+      <h3 className="font-black text-white">6-minute warm-up</h3>
       <p className="mt-1 text-sm text-slate-400">Do this before every workout. No jumping. Keep leg work controlled and pain-free.</p>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -999,11 +1269,15 @@ function WorkoutDashboard() {
   }
 
   function resetProgress() {
-    setCompleted({});
-    setSelectedWeek("A");
-    setSelectedDay("Monday");
-    resetSession();
-  }
+  const confirmReset = window.confirm("Are you sure you want to reset all workout progress? This cannot be undone.");
+
+  if (!confirmReset) return;
+
+  setCompleted({});
+  setSelectedWeek("A");
+  setSelectedDay("Monday");
+  resetSession();
+}
 
   if (!progressLoaded) {
     return (
@@ -1028,7 +1302,7 @@ function WorkoutDashboard() {
                     <Dumbbell size={16} /> 5 kg dumbbell rotation
                   </div>
 
-                  <h1 className="max-w-3xl text-4xl font-black tracking-tight md:text-6xl">A/B/C weekly workout coach.</h1>
+                  <h1 className="max-w-3xl text-4xl font-black tracking-tight md:text-6xl">Ezra&apos;s Workout App</h1>
 
                   <p className="mt-4 max-w-xl text-slate-300">
                     Start at Week A. Complete Monday, Wednesday, and Friday, then the app automatically moves you to Week B. After Week C, it loops back to Week A.
