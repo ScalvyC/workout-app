@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   CalendarDays,
   CheckCircle2,
@@ -211,6 +211,43 @@ function getNextWeekKey(weekKey) {
 
 function getDayPlan(weekKey, day) {
   return day === "Saturday" ? OPTIONAL_SATURDAY : PLAN[weekKey].days[day];
+}
+function localDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getRecommendedDay(date = new Date()) {
+  const day = date.getDay();
+
+  if (day === 1) return "Monday";
+  if (day === 2 || day === 3) return "Wednesday";
+  if (day === 4 || day === 5) return "Friday";
+  if (day === 6) return "Saturday";
+
+  return "Monday";
+}
+
+function getExerciseTimerSeconds(exercise) {
+  const reps = String(exercise?.reps || "").toLowerCase();
+
+  if (reps.includes("min")) {
+    const numbers = reps.match(/\d+/g)?.map(Number) || [];
+    return numbers.length ? Math.max(...numbers) * 60 : 60;
+  }
+
+  if (reps.includes("sec")) {
+    const numbers = reps.match(/\d+/g)?.map(Number) || [];
+    return numbers.length ? Math.max(...numbers) : 30;
+  }
+
+  if (exercise?.type === "plank" || exercise?.type === "stretch") {
+    return 45;
+  }
+
+  return 0;
 }
 
 function getExerciseKey(weekKey, day, index) {
@@ -872,8 +909,8 @@ function ExerciseInstructions({ exercise }) {
 function WarmUpCard() {
   return (
     <div className="rounded-[2rem] border border-white/10 bg-slate-900 p-5">
-      <h3 className="font-black text-white">6-minute warm-up</h3>
-      <p className="mt-1 text-sm text-slate-400">Do this before every workout. No jumping. Keep leg work controlled and pain-free.</p>
+      <h3 className="font-black text-white">6-Minute Warm-Up</h3>
+      <p className="mt-1 text-sm text-slate-400">Do this before every workout. Keep movement controlled and pain-free.</p>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
         {WARM_UP.map(([movement, time]) => (
@@ -966,6 +1003,42 @@ function DayPicker({ selectedDay, selectedWeek, completed, onChooseDay }) {
   );
 }
 
+function ExerciseTimerCard({ totalSeconds, leftSeconds, isRunning, onStart, onReset }) {
+  if (!totalSeconds) return null;
+
+  const isDone = leftSeconds === 0;
+
+  return (
+    <div className="rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-bold text-emerald-200">Exercise timer</p>
+          <p className="text-4xl font-black text-white">{formatTime(leftSeconds)}</p>
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onStart}
+            disabled={isRunning}
+            className="rounded-2xl bg-emerald-400 px-4 py-3 font-black text-slate-950 disabled:opacity-50"
+          >
+            {isDone ? "Restart" : isRunning ? "Running" : "Start"}
+          </button>
+
+          <button
+            type="button"
+            onClick={onReset}
+            className="rounded-2xl bg-white/10 px-4 py-3 font-bold text-white hover:bg-white/20"
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function WorkoutSession({
   week,
   day,
@@ -977,12 +1050,18 @@ function WorkoutSession({
   restLeft,
   restInfo,
   isPlaying,
+  exerciseTimerTotal,
+  exerciseTimerLeft,
+  exerciseTimerRunning,
+  wakeStatus,
   onExit,
   onTogglePlay,
   onCompleteSet,
   onSkipRest,
   onBack,
-  onNext
+  onNext,
+  onStartExerciseTimer,
+  onResetExerciseTimer
 }) {
   return (
     <main className="rounded-[2rem] border border-white/10 bg-slate-900 p-5 md:p-6">
@@ -991,6 +1070,7 @@ function WorkoutSession({
           <p className="font-semibold text-emerald-400">{week.name} • {day} • Exercise {exerciseIndex + 1} of {totalExercises}</p>
           <h2 className="text-2xl font-black md:text-4xl">{exercise.name}</h2>
           <p className="mt-1 text-slate-300">Set {setNumber} of {exercise.sets} • Target: {exercise.reps}</p>
+          <p className="mt-2 text-xs font-bold text-slate-500">{wakeStatus}</p>
         </div>
 
         <button type="button" onClick={onExit} className="rounded-2xl bg-white/10 p-3 hover:bg-white/20">
@@ -1021,6 +1101,13 @@ function WorkoutSession({
             <MiniAnimation type={exercise.type} playing={isPlaying} />
             <div className="space-y-4">
               <SetTracker totalSets={exercise.sets} currentSet={setNumber} resting={resting} />
+              <ExerciseTimerCard
+                totalSeconds={exerciseTimerTotal}
+                leftSeconds={exerciseTimerLeft}
+                isRunning={exerciseTimerRunning}
+                onStart={onStartExerciseTimer}
+                onReset={onResetExerciseTimer}
+              />
               <ExerciseInstructions exercise={exercise} />
             </div>
           </div>
@@ -1052,22 +1139,29 @@ function WorkoutSession({
 }
 
 function WorkoutDashboard() {
+  const wakeLockRef = useRef(null);
   const [selectedWeek, setSelectedWeek] = useState("A");
-  const [selectedDay, setSelectedDay] = useState("Monday");
+  const [selectedDay, setSelectedDay] = useState(getRecommendedDay());
   const [started, setStarted] = useState(false);
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [setNumber, setSetNumber] = useState(1);
   const [isPlaying, setIsPlaying] = useState(true);
   const [resting, setResting] = useState(false);
   const [restLeft, setRestLeft] = useState(0);
+  const [restEndAt, setRestEndAt] = useState(null);
   const [completed, setCompleted] = useState({});
   const [restInfo, setRestInfo] = useState(null);
   const [progressLoaded, setProgressLoaded] = useState(false);
   const [syncStatus, setSyncStatus] = useState("Loading progress...");
+  const [exerciseTimerEndAt, setExerciseTimerEndAt] = useState(null);
+  const [exerciseTimerLeft, setExerciseTimerLeft] = useState(0);
+  const [wakeStatus, setWakeStatus] = useState("Screen wake lock ready.");
 
-  const week = PLAN[selectedWeek];
+  const week = PLAN[selectedWeek] || PLAN.A;
   const dayPlan = getDayPlan(selectedWeek, selectedDay);
   const exercise = dayPlan.exercises[exerciseIndex] || dayPlan.exercises[0];
+  const exerciseTimerTotal = getExerciseTimerSeconds(exercise);
+  const exerciseTimerRunning = Boolean(exerciseTimerEndAt && exerciseTimerLeft > 0);
   const progress = getDayProgress(selectedWeek, selectedDay, completed);
   const currentWeekProgress = useMemo(() => getWeekProgress(selectedWeek, completed), [selectedWeek, completed]);
   const nextWeekKey = getNextWeekKey(selectedWeek);
@@ -1095,15 +1189,46 @@ function WorkoutDashboard() {
       .maybeSingle();
 
     if (error) {
-      setSyncStatus("Could not load saved progress.");
+      setSyncStatus("Could not load saved progress. Check Supabase table/RLS.");
       setProgressLoaded(true);
       return;
     }
 
-    if (data?.data) {
-      setCompleted(data.data.completed || {});
-      setSelectedWeek(data.data.selectedWeek || "A");
-      setSelectedDay(data.data.selectedDay || "Monday");
+    const saved = data?.data || {};
+    const savedCompleted = saved.completed || {};
+    const savedWeek = WEEK_KEYS.includes(saved.selectedWeek) ? saved.selectedWeek : "A";
+    const session = saved.session || {};
+    const today = localDateKey();
+
+    setCompleted(savedCompleted);
+
+    if (session.date === today && session.started) {
+      const sessionWeek = WEEK_KEYS.includes(session.selectedWeek) ? session.selectedWeek : savedWeek;
+      const sessionDay = DAYS.includes(session.selectedDay) ? session.selectedDay : getRecommendedDay();
+      const sessionPlan = getDayPlan(sessionWeek, sessionDay);
+      const safeExerciseIndex = Math.min(Math.max(Number(session.exerciseIndex) || 0, 0), sessionPlan.exercises.length - 1);
+      const safeSetNumber = Math.max(Number(session.setNumber) || 1, 1);
+
+      setSelectedWeek(sessionWeek);
+      setSelectedDay(sessionDay);
+      setStarted(true);
+      setExerciseIndex(safeExerciseIndex);
+      setSetNumber(safeSetNumber);
+      setResting(Boolean(session.resting));
+      setRestEndAt(session.restEndAt || null);
+      setRestInfo(session.restInfo || null);
+      setExerciseTimerEndAt(session.exerciseTimerEndAt || null);
+    } else {
+      setSelectedWeek(savedWeek);
+      setSelectedDay(getRecommendedDay());
+      setStarted(false);
+      setExerciseIndex(0);
+      setSetNumber(1);
+      setResting(false);
+      setRestEndAt(null);
+      setRestLeft(0);
+      setRestInfo(null);
+      setExerciseTimerEndAt(null);
     }
 
     setProgressLoaded(true);
@@ -1147,44 +1272,173 @@ function WorkoutDashboard() {
           data: {
             completed,
             selectedWeek,
-            selectedDay
+            selectedDay,
+            session: {
+              date: localDateKey(),
+              started,
+              selectedWeek,
+              selectedDay,
+              exerciseIndex,
+              setNumber,
+              resting,
+              restEndAt,
+              restInfo,
+              exerciseTimerEndAt
+            }
           },
           updated_at: new Date().toISOString()
         },
         { onConflict: "user_id" }
       );
 
-      setSyncStatus(error ? "Save failed. Check Supabase table." : "Saved");
+      setSyncStatus(error ? `Save failed: ${error.message}` : "Saved");
     }, 600);
 
     return () => window.clearTimeout(saveTimer);
-  }, [completed, selectedWeek, selectedDay, progressLoaded]);
+  }, [
+    completed,
+    selectedWeek,
+    selectedDay,
+    started,
+    exerciseIndex,
+    setNumber,
+    resting,
+    restEndAt,
+    restInfo,
+    exerciseTimerEndAt,
+    progressLoaded
+  ]);
 
   useEffect(() => {
-    if (!resting || restLeft <= 0) return undefined;
+    if (!resting || !restEndAt) return undefined;
 
-    const timerId = window.setInterval(() => {
-      setRestLeft(value => Math.max(value - 1, 0));
-    }, 1000);
+    function tick() {
+      const secondsLeft = Math.max(0, Math.ceil((Number(restEndAt) - Date.now()) / 1000));
+      setRestLeft(secondsLeft);
 
-    return () => window.clearInterval(timerId);
-  }, [resting, restLeft]);
-
-  useEffect(() => {
-    if (resting && restLeft === 0) {
-      setResting(false);
-      setIsPlaying(true);
+      if (secondsLeft <= 0) {
+        setResting(false);
+        setRestEndAt(null);
+        setIsPlaying(true);
+      }
     }
-  }, [resting, restLeft]);
+
+    tick();
+    const timerId = window.setInterval(tick, 500);
+    return () => window.clearInterval(timerId);
+  }, [resting, restEndAt]);
+
+  useEffect(() => {
+    if (!exerciseTimerEndAt) {
+      setExerciseTimerLeft(exerciseTimerTotal);
+      return undefined;
+    }
+
+    function tick() {
+      const secondsLeft = Math.max(0, Math.ceil((Number(exerciseTimerEndAt) - Date.now()) / 1000));
+      setExerciseTimerLeft(secondsLeft);
+
+      if (secondsLeft <= 0) {
+        setExerciseTimerEndAt(null);
+      }
+    }
+
+    tick();
+    const timerId = window.setInterval(tick, 500);
+    return () => window.clearInterval(timerId);
+  }, [exerciseTimerEndAt, exerciseTimerTotal]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function requestWakeLock() {
+      if (!started) return;
+
+      if (!("wakeLock" in navigator)) {
+        setWakeStatus("Screen wake lock is not supported on this browser.");
+        return;
+      }
+
+      try {
+        if (wakeLockRef.current) return;
+
+        const lock = await navigator.wakeLock.request("screen");
+
+        if (cancelled) {
+          await lock.release();
+          return;
+        }
+
+        wakeLockRef.current = lock;
+        setWakeStatus("Screen wake lock active.");
+
+        lock.addEventListener("release", () => {
+          wakeLockRef.current = null;
+          setWakeStatus("Screen wake lock released.");
+        });
+      } catch {
+        setWakeStatus("Could not keep screen awake. Check browser permissions.");
+      }
+    }
+
+    async function releaseWakeLock() {
+      if (wakeLockRef.current) {
+        await wakeLockRef.current.release();
+        wakeLockRef.current = null;
+      }
+    }
+
+    requestWakeLock();
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible" && started) {
+        requestWakeLock();
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      releaseWakeLock();
+    };
+  }, [started]);
+
+  function startRest(seconds, info) {
+    const restSeconds = Math.max(0, Number(seconds) || 0);
+    const endAt = Date.now() + restSeconds * 1000;
+
+    setRestInfo(info);
+    setRestEndAt(endAt);
+    setRestLeft(restSeconds);
+    setResting(true);
+    setIsPlaying(false);
+    setExerciseTimerEndAt(null);
+  }
+
+  function startExerciseTimer() {
+    if (!exerciseTimerTotal) return;
+
+    setExerciseTimerLeft(exerciseTimerTotal);
+    setExerciseTimerEndAt(Date.now() + exerciseTimerTotal * 1000);
+  }
+
+  function resetExerciseTimer() {
+    setExerciseTimerEndAt(null);
+    setExerciseTimerLeft(exerciseTimerTotal);
+  }
 
   function resetSession() {
     setStarted(false);
     setExerciseIndex(0);
     setSetNumber(1);
     setResting(false);
+    setRestEndAt(null);
     setRestLeft(0);
     setIsPlaying(true);
     setRestInfo(null);
+    setExerciseTimerEndAt(null);
   }
 
   function chooseDay(day) {
@@ -1197,44 +1451,39 @@ function WorkoutDashboard() {
     setExerciseIndex(0);
     setSetNumber(1);
     setResting(false);
+    setRestEndAt(null);
     setRestLeft(0);
     setIsPlaying(true);
     setRestInfo(null);
+    setExerciseTimerEndAt(null);
   }
 
   function finishSet() {
     if (setNumber < exercise.sets) {
       const nextSet = setNumber + 1;
 
-      setRestInfo({
+      setSetNumber(nextSet);
+      startRest(exercise.rest, {
         completed: `Set ${setNumber} of ${exercise.sets} complete`,
         next: `Next: Set ${nextSet} of ${exercise.sets}`
       });
-
-      setSetNumber(nextSet);
-      setResting(true);
-      setRestLeft(exercise.rest);
-      setIsPlaying(false);
       return;
     }
 
     const completedKey = getExerciseKey(selectedWeek, selectedDay, exerciseIndex);
     const nextCompleted = { ...completed, [completedKey]: true };
     setCompleted(nextCompleted);
+    setExerciseTimerEndAt(null);
 
     if (exerciseIndex < dayPlan.exercises.length - 1) {
       const nextExercise = dayPlan.exercises[exerciseIndex + 1];
 
-      setRestInfo({
+      setExerciseIndex(index => index + 1);
+      setSetNumber(1);
+      startRest(exercise.rest, {
         completed: `${exercise.name} complete`,
         next: `Next: ${nextExercise.name}`
       });
-
-      setExerciseIndex(index => index + 1);
-      setSetNumber(1);
-      setResting(true);
-      setRestLeft(exercise.rest);
-      setIsPlaying(false);
       return;
     }
 
@@ -1252,9 +1501,11 @@ function WorkoutDashboard() {
     setExerciseIndex(index => index + 1);
     setSetNumber(1);
     setResting(false);
+    setRestEndAt(null);
     setRestLeft(0);
     setIsPlaying(true);
     setRestInfo(null);
+    setExerciseTimerEndAt(null);
   }
 
   function goBack() {
@@ -1263,21 +1514,23 @@ function WorkoutDashboard() {
     setExerciseIndex(index => index - 1);
     setSetNumber(1);
     setResting(false);
+    setRestEndAt(null);
     setRestLeft(0);
     setIsPlaying(true);
     setRestInfo(null);
+    setExerciseTimerEndAt(null);
   }
 
   function resetProgress() {
-  const confirmReset = window.confirm("Are you sure you want to reset all workout progress? This cannot be undone.");
+    const confirmReset = window.confirm("Are you sure you want to reset all workout progress? This cannot be undone.");
 
-  if (!confirmReset) return;
+    if (!confirmReset) return;
 
-  setCompleted({});
-  setSelectedWeek("A");
-  setSelectedDay("Monday");
-  resetSession();
-}
+    setCompleted({});
+    setSelectedWeek("A");
+    setSelectedDay(getRecommendedDay());
+    resetSession();
+  }
 
   if (!progressLoaded) {
     return (
@@ -1404,22 +1657,30 @@ function WorkoutDashboard() {
             restLeft={restLeft}
             restInfo={restInfo}
             isPlaying={isPlaying}
+            exerciseTimerTotal={exerciseTimerTotal}
+            exerciseTimerLeft={exerciseTimerLeft}
+            exerciseTimerRunning={exerciseTimerRunning}
+            wakeStatus={wakeStatus}
             onExit={resetSession}
             onTogglePlay={() => setIsPlaying(value => !value)}
             onCompleteSet={finishSet}
             onSkipRest={() => {
               setResting(false);
+              setRestEndAt(null);
               setRestLeft(0);
               setIsPlaying(true);
             }}
             onBack={goBack}
             onNext={goNext}
+            onStartExerciseTimer={startExerciseTimer}
+            onResetExerciseTimer={resetExerciseTimer}
           />
         )}
       </div>
     </div>
   );
 }
+
 
 export default function WorkoutApp() {
   return (
