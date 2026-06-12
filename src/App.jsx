@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
-import LoginPage from "./pages/LoginPage";
+import LoginPage from "./pages/auth/LoginPage";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -1429,22 +1429,22 @@ VITE_SUPABASE_ANON_KEY=your_anon_key`}
   }
 
   if (!session) {
-  return (
-    <LoginPage
-      mode={mode}
-      email={email}
-      password={password}
-      authMessage={authMessage}
-      onSubmit={handleSubmit}
-      onEmailChange={setEmail}
-      onPasswordChange={setPassword}
-      onToggleMode={() => {
-        setMode(mode === "login" ? "signup" : "login");
-        setAuthMessage("");
-      }}
-    />
-  );
-}
+    return (
+      <LoginPage
+        mode={mode}
+        email={email}
+        password={password}
+        authMessage={authMessage}
+        onSubmit={handleSubmit}
+        onEmailChange={setEmail}
+        onPasswordChange={setPassword}
+        onToggleMode={() => {
+          setMode(mode === "login" ? "signup" : "login");
+          setAuthMessage("");
+        }}
+      />
+    );
+  }
 
   return (
     <>
