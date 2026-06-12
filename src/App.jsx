@@ -10,10 +10,13 @@ import {
   Play,
   RotateCcw,
   Timer,
-  X
+  X,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
+
+import LoginPage from "./pages/auth/LoginPage";
+import HomePage from "./pages/homepage/HomePage";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -32,7 +35,7 @@ const WARM_UP = [
   ["Shoulder taps", "45 sec"],
   ["World’s greatest stretch or hip flexor stretch", "1 min"],
   ["Easy incline push-ups", "45 sec"],
-  ["Light jumping jacks or marching in place", "45 sec"]
+  ["Light jumping jacks or marching in place", "45 sec"],
 ];
 
 const MAIN_DAYS = ["Monday", "Wednesday", "Friday"];
@@ -53,7 +56,7 @@ function ex({
   target,
   progressionGoal,
   makeHarder,
-  nextExercise
+  nextExercise,
 }) {
   return {
     name,
@@ -68,115 +71,886 @@ function ex({
     target,
     progressionGoal,
     makeHarder,
-    nextExercise
+    nextExercise,
   };
 }
 
 const EXERCISE_POOLS = {
   pushChest: [
-    ex({ name: "Wall Push-Up", slot: "Chest", category: "Push", level: "Beginner", equipment: "Wall", sets: 3, reps: "10 to 15", rest: 45, type: "pushup", target: "Chest, triceps, shoulders", progressionGoal: "Complete 3 sets of 15 reps with good form", makeHarder: "Move to incline push-ups", nextExercise: "Incline Push-Up" }),
-    ex({ name: "Incline Push-Up", slot: "Chest", category: "Push", level: "Beginner", equipment: "Chair/desk", sets: 3, reps: "6 to 12", rest: 60, type: "pushup", target: "Chest, shoulders, triceps", progressionGoal: "Complete 3 sets of 12 reps with good form", makeHarder: "Lower the incline or slow the lowering phase", nextExercise: "Normal Push-Up" }),
-    ex({ name: "Dumbbell Floor Press", slot: "Chest", category: "Push", level: "Beginner", equipment: "5kg dumbbells", sets: 3, reps: "10 to 15", rest: 60, type: "floorPress", target: "Chest, triceps", progressionGoal: "Complete 3 sets of 15 reps", makeHarder: "Pause at the bottom", nextExercise: "Single-Arm Dumbbell Floor Press" }),
-    ex({ name: "Normal Push-Up", slot: "Chest", category: "Push", level: "Intermediate", equipment: "None", sets: 3, reps: "6 to 15", rest: 75, type: "pushup", target: "Chest, shoulders, triceps", progressionGoal: "Complete 3 sets of 15 reps", makeHarder: "Slow 3 sec lowering", nextExercise: "Slow Push-Up" })
+    ex({
+      name: "Wall Push-Up",
+      slot: "Chest",
+      category: "Push",
+      level: "Beginner",
+      equipment: "Wall",
+      sets: 3,
+      reps: "10 to 15",
+      rest: 45,
+      type: "pushup",
+      target: "Chest, triceps, shoulders",
+      progressionGoal: "Complete 3 sets of 15 reps with good form",
+      makeHarder: "Move to incline push-ups",
+      nextExercise: "Incline Push-Up",
+    }),
+    ex({
+      name: "Incline Push-Up",
+      slot: "Chest",
+      category: "Push",
+      level: "Beginner",
+      equipment: "Chair/desk",
+      sets: 3,
+      reps: "6 to 12",
+      rest: 60,
+      type: "pushup",
+      target: "Chest, shoulders, triceps",
+      progressionGoal: "Complete 3 sets of 12 reps with good form",
+      makeHarder: "Lower the incline or slow the lowering phase",
+      nextExercise: "Normal Push-Up",
+    }),
+    ex({
+      name: "Dumbbell Floor Press",
+      slot: "Chest",
+      category: "Push",
+      level: "Beginner",
+      equipment: "5kg dumbbells",
+      sets: 3,
+      reps: "10 to 15",
+      rest: 60,
+      type: "floorPress",
+      target: "Chest, triceps",
+      progressionGoal: "Complete 3 sets of 15 reps",
+      makeHarder: "Pause at the bottom",
+      nextExercise: "Single-Arm Dumbbell Floor Press",
+    }),
+    ex({
+      name: "Normal Push-Up",
+      slot: "Chest",
+      category: "Push",
+      level: "Intermediate",
+      equipment: "None",
+      sets: 3,
+      reps: "6 to 15",
+      rest: 75,
+      type: "pushup",
+      target: "Chest, shoulders, triceps",
+      progressionGoal: "Complete 3 sets of 15 reps",
+      makeHarder: "Slow 3 sec lowering",
+      nextExercise: "Slow Push-Up",
+    }),
   ],
   pushShoulder: [
-    ex({ name: "Dumbbell Overhead Press", slot: "Shoulder", category: "Shoulders", level: "Beginner", equipment: "5kg dumbbells", sets: 3, reps: "8 to 12", rest: 60, type: "press", target: "Shoulders, triceps, core", progressionGoal: "Complete 3 sets of 12 reps", makeHarder: "Slow the lowering phase", nextExercise: "Slow Dumbbell Press" }),
-    ex({ name: "Dumbbell Lateral Raise", slot: "Shoulder", category: "Shoulders", level: "Beginner", equipment: "5kg dumbbells", sets: 2, reps: "10 to 15", rest: 45, type: "lateralRaise", target: "Side delts", progressionGoal: "Complete 2 sets of 15 reps", makeHarder: "Hold top for 1 sec", nextExercise: "Lateral Raise Hold" }),
-    ex({ name: "Dumbbell Front Raise", slot: "Shoulder", category: "Shoulders", level: "Beginner", equipment: "5kg dumbbells", sets: 2, reps: "10 to 15", rest: 45, type: "lateralRaise", target: "Front delts", progressionGoal: "Complete 2 sets of 15 reps", makeHarder: "Slow the lowering phase", nextExercise: "Slow Dumbbell Press" }),
-    ex({ name: "Pike Push-Up", slot: "Shoulder", category: "Shoulders", level: "Intermediate", equipment: "None", sets: 3, reps: "5 to 10", rest: 75, type: "pushup", target: "Shoulders, triceps", progressionGoal: "Complete 3 sets of 10 reps", makeHarder: "Increase hip height", nextExercise: "Wall Walk Hold" })
+    ex({
+      name: "Dumbbell Overhead Press",
+      slot: "Shoulder",
+      category: "Shoulders",
+      level: "Beginner",
+      equipment: "5kg dumbbells",
+      sets: 3,
+      reps: "8 to 12",
+      rest: 60,
+      type: "press",
+      target: "Shoulders, triceps, core",
+      progressionGoal: "Complete 3 sets of 12 reps",
+      makeHarder: "Slow the lowering phase",
+      nextExercise: "Slow Dumbbell Press",
+    }),
+    ex({
+      name: "Dumbbell Lateral Raise",
+      slot: "Shoulder",
+      category: "Shoulders",
+      level: "Beginner",
+      equipment: "5kg dumbbells",
+      sets: 2,
+      reps: "10 to 15",
+      rest: 45,
+      type: "lateralRaise",
+      target: "Side delts",
+      progressionGoal: "Complete 2 sets of 15 reps",
+      makeHarder: "Hold top for 1 sec",
+      nextExercise: "Lateral Raise Hold",
+    }),
+    ex({
+      name: "Dumbbell Front Raise",
+      slot: "Shoulder",
+      category: "Shoulders",
+      level: "Beginner",
+      equipment: "5kg dumbbells",
+      sets: 2,
+      reps: "10 to 15",
+      rest: 45,
+      type: "lateralRaise",
+      target: "Front delts",
+      progressionGoal: "Complete 2 sets of 15 reps",
+      makeHarder: "Slow the lowering phase",
+      nextExercise: "Slow Dumbbell Press",
+    }),
+    ex({
+      name: "Pike Push-Up",
+      slot: "Shoulder",
+      category: "Shoulders",
+      level: "Intermediate",
+      equipment: "None",
+      sets: 3,
+      reps: "5 to 10",
+      rest: 75,
+      type: "pushup",
+      target: "Shoulders, triceps",
+      progressionGoal: "Complete 3 sets of 10 reps",
+      makeHarder: "Increase hip height",
+      nextExercise: "Wall Walk Hold",
+    }),
   ],
   pushTriceps: [
-    ex({ name: "Dumbbell Triceps Extension", slot: "Triceps", category: "Arms", level: "Beginner", equipment: "1 dumbbell", sets: 2, reps: "10 to 15", rest: 45, type: "press", target: "Triceps", progressionGoal: "Complete 2 sets of 15 reps", makeHarder: "Slow the stretch at the bottom", nextExercise: "Overhead Triceps Extension" }),
-    ex({ name: "Close-Grip Incline Push-Up", slot: "Triceps", category: "Push", level: "Beginner", equipment: "Chair/desk", sets: 3, reps: "6 to 12", rest: 60, type: "pushup", target: "Triceps, chest", progressionGoal: "Complete 3 sets of 12 reps", makeHarder: "Lower the incline", nextExercise: "Close-Grip Push-Up" }),
-    ex({ name: "Dumbbell Kickback", slot: "Triceps", category: "Arms", level: "Beginner", equipment: "5kg dumbbells", sets: 2, reps: "12 to 15", rest: 45, type: "reverseFly", target: "Triceps", progressionGoal: "Complete 2 sets of 15 reps", makeHarder: "Pause at the top", nextExercise: "Overhead Triceps Extension" }),
-    ex({ name: "Close-Grip Push-Up", slot: "Triceps", category: "Push", level: "Intermediate", equipment: "None", sets: 3, reps: "6 to 12", rest: 60, type: "pushup", target: "Triceps, chest", progressionGoal: "Complete 3 sets of 12 reps", makeHarder: "Slow lowering", nextExercise: "Chair Dips" })
+    ex({
+      name: "Dumbbell Triceps Extension",
+      slot: "Triceps",
+      category: "Arms",
+      level: "Beginner",
+      equipment: "1 dumbbell",
+      sets: 2,
+      reps: "10 to 15",
+      rest: 45,
+      type: "press",
+      target: "Triceps",
+      progressionGoal: "Complete 2 sets of 15 reps",
+      makeHarder: "Slow the stretch at the bottom",
+      nextExercise: "Overhead Triceps Extension",
+    }),
+    ex({
+      name: "Close-Grip Incline Push-Up",
+      slot: "Triceps",
+      category: "Push",
+      level: "Beginner",
+      equipment: "Chair/desk",
+      sets: 3,
+      reps: "6 to 12",
+      rest: 60,
+      type: "pushup",
+      target: "Triceps, chest",
+      progressionGoal: "Complete 3 sets of 12 reps",
+      makeHarder: "Lower the incline",
+      nextExercise: "Close-Grip Push-Up",
+    }),
+    ex({
+      name: "Dumbbell Kickback",
+      slot: "Triceps",
+      category: "Arms",
+      level: "Beginner",
+      equipment: "5kg dumbbells",
+      sets: 2,
+      reps: "12 to 15",
+      rest: 45,
+      type: "reverseFly",
+      target: "Triceps",
+      progressionGoal: "Complete 2 sets of 15 reps",
+      makeHarder: "Pause at the top",
+      nextExercise: "Overhead Triceps Extension",
+    }),
+    ex({
+      name: "Close-Grip Push-Up",
+      slot: "Triceps",
+      category: "Push",
+      level: "Intermediate",
+      equipment: "None",
+      sets: 3,
+      reps: "6 to 12",
+      rest: 60,
+      type: "pushup",
+      target: "Triceps, chest",
+      progressionGoal: "Complete 3 sets of 12 reps",
+      makeHarder: "Slow lowering",
+      nextExercise: "Chair Dips",
+    }),
   ],
   pullRow: [
-    ex({ name: "One-Arm Dumbbell Row", slot: "Row", category: "Pull", level: "Beginner", equipment: "5kg dumbbell", sets: 3, reps: "10 to 15 each side", rest: 60, type: "row", target: "Back, lats, biceps", progressionGoal: "Complete 3 sets of 15 reps each side", makeHarder: "3 sec lowering", nextExercise: "Slow One-Arm Row" }),
-    ex({ name: "Two-Dumbbell Bent Row", slot: "Row", category: "Pull", level: "Beginner", equipment: "5kg dumbbells", sets: 3, reps: "10 to 15", rest: 60, type: "row", target: "Back, rear delts", progressionGoal: "Complete 3 sets of 15 reps", makeHarder: "Pause at the top", nextExercise: "Slow One-Arm Row" }),
-    ex({ name: "Table Row", slot: "Row", category: "Pull", level: "Beginner", equipment: "Stable table", sets: 3, reps: "5 to 10", rest: 75, type: "bodyRow", target: "Back, biceps", progressionGoal: "Complete 3 sets of 10 reps", makeHarder: "Move feet forward", nextExercise: "Feet-Forward Table Row" }),
-    ex({ name: "Feet-Forward Table Row", slot: "Row", category: "Pull", level: "Intermediate", equipment: "Stable table", sets: 3, reps: "6 to 12", rest: 75, type: "bodyRow", target: "Back, biceps", progressionGoal: "Complete 3 sets of 12 reps", makeHarder: "Move feet further forward", nextExercise: "Bedsheet Door Row" })
+    ex({
+      name: "One-Arm Dumbbell Row",
+      slot: "Row",
+      category: "Pull",
+      level: "Beginner",
+      equipment: "5kg dumbbell",
+      sets: 3,
+      reps: "10 to 15 each side",
+      rest: 60,
+      type: "row",
+      target: "Back, lats, biceps",
+      progressionGoal: "Complete 3 sets of 15 reps each side",
+      makeHarder: "3 sec lowering",
+      nextExercise: "Slow One-Arm Row",
+    }),
+    ex({
+      name: "Two-Dumbbell Bent Row",
+      slot: "Row",
+      category: "Pull",
+      level: "Beginner",
+      equipment: "5kg dumbbells",
+      sets: 3,
+      reps: "10 to 15",
+      rest: 60,
+      type: "row",
+      target: "Back, rear delts",
+      progressionGoal: "Complete 3 sets of 15 reps",
+      makeHarder: "Pause at the top",
+      nextExercise: "Slow One-Arm Row",
+    }),
+    ex({
+      name: "Table Row",
+      slot: "Row",
+      category: "Pull",
+      level: "Beginner",
+      equipment: "Stable table",
+      sets: 3,
+      reps: "5 to 10",
+      rest: 75,
+      type: "bodyRow",
+      target: "Back, biceps",
+      progressionGoal: "Complete 3 sets of 10 reps",
+      makeHarder: "Move feet forward",
+      nextExercise: "Feet-Forward Table Row",
+    }),
+    ex({
+      name: "Feet-Forward Table Row",
+      slot: "Row",
+      category: "Pull",
+      level: "Intermediate",
+      equipment: "Stable table",
+      sets: 3,
+      reps: "6 to 12",
+      rest: 75,
+      type: "bodyRow",
+      target: "Back, biceps",
+      progressionGoal: "Complete 3 sets of 12 reps",
+      makeHarder: "Move feet further forward",
+      nextExercise: "Bedsheet Door Row",
+    }),
   ],
   pullBack: [
-    ex({ name: "Dumbbell Reverse Fly", slot: "Back", category: "Pull", level: "Beginner", equipment: "5kg dumbbells", sets: 2, reps: "12 to 15", rest: 45, type: "reverseFly", target: "Rear delts, upper back", progressionGoal: "Complete 2 sets of 15 reps", makeHarder: "Pause at the top", nextExercise: "Rear Delt Fly With Pause" }),
-    ex({ name: "Dumbbell Shrugs", slot: "Back", category: "Pull", level: "Beginner", equipment: "5kg dumbbells", sets: 3, reps: "12 to 20", rest: 45, type: "row", target: "Traps, upper back", progressionGoal: "Complete 3 sets of 20 reps", makeHarder: "Hold top for 2 sec", nextExercise: "Weighted Shrugs" }),
-    ex({ name: "Dumbbell Pullover", slot: "Back", category: "Pull", level: "Intermediate", equipment: "Dumbbell", sets: 3, reps: "10 to 15", rest: 60, type: "floorPress", target: "Lats, chest, core", progressionGoal: "Complete 3 sets of 15 reps", makeHarder: "Slow controlled reps", nextExercise: "Dumbbell Pullover With Pause" })
+    ex({
+      name: "Dumbbell Reverse Fly",
+      slot: "Back",
+      category: "Pull",
+      level: "Beginner",
+      equipment: "5kg dumbbells",
+      sets: 2,
+      reps: "12 to 15",
+      rest: 45,
+      type: "reverseFly",
+      target: "Rear delts, upper back",
+      progressionGoal: "Complete 2 sets of 15 reps",
+      makeHarder: "Pause at the top",
+      nextExercise: "Rear Delt Fly With Pause",
+    }),
+    ex({
+      name: "Dumbbell Shrugs",
+      slot: "Back",
+      category: "Pull",
+      level: "Beginner",
+      equipment: "5kg dumbbells",
+      sets: 3,
+      reps: "12 to 20",
+      rest: 45,
+      type: "row",
+      target: "Traps, upper back",
+      progressionGoal: "Complete 3 sets of 20 reps",
+      makeHarder: "Hold top for 2 sec",
+      nextExercise: "Weighted Shrugs",
+    }),
+    ex({
+      name: "Dumbbell Pullover",
+      slot: "Back",
+      category: "Pull",
+      level: "Intermediate",
+      equipment: "Dumbbell",
+      sets: 3,
+      reps: "10 to 15",
+      rest: 60,
+      type: "floorPress",
+      target: "Lats, chest, core",
+      progressionGoal: "Complete 3 sets of 15 reps",
+      makeHarder: "Slow controlled reps",
+      nextExercise: "Dumbbell Pullover With Pause",
+    }),
   ],
   biceps: [
-    ex({ name: "Dumbbell Bicep Curl", slot: "Biceps", category: "Arms", level: "Beginner", equipment: "5kg dumbbells", sets: 3, reps: "10 to 15", rest: 45, type: "curl", target: "Biceps", progressionGoal: "Complete 3 sets of 15 reps", makeHarder: "Slow the lowering phase", nextExercise: "Zottman Curl" }),
-    ex({ name: "Hammer Curl", slot: "Biceps", category: "Arms", level: "Beginner", equipment: "5kg dumbbells", sets: 3, reps: "10 to 15", rest: 45, type: "curl", target: "Biceps, forearms", progressionGoal: "Complete 3 sets of 15 reps", makeHarder: "Pause at top", nextExercise: "Cross-Body Hammer Curl" }),
-    ex({ name: "Concentration Curl", slot: "Biceps", category: "Arms", level: "Intermediate", equipment: "Dumbbell", sets: 2, reps: "10 to 12 each arm", rest: 45, type: "curl", target: "Biceps", progressionGoal: "Complete 2 sets of 12 reps each arm", makeHarder: "Pause at top", nextExercise: "Zottman Curl" }),
-    ex({ name: "Zottman Curl", slot: "Biceps", category: "Arms", level: "Intermediate", equipment: "Dumbbells", sets: 2, reps: "8 to 12", rest: 45, type: "curl", target: "Biceps, forearms", progressionGoal: "Complete 2 sets of 12 reps", makeHarder: "Slow lowering", nextExercise: "Curl 21s" })
+    ex({
+      name: "Dumbbell Bicep Curl",
+      slot: "Biceps",
+      category: "Arms",
+      level: "Beginner",
+      equipment: "5kg dumbbells",
+      sets: 3,
+      reps: "10 to 15",
+      rest: 45,
+      type: "curl",
+      target: "Biceps",
+      progressionGoal: "Complete 3 sets of 15 reps",
+      makeHarder: "Slow the lowering phase",
+      nextExercise: "Zottman Curl",
+    }),
+    ex({
+      name: "Hammer Curl",
+      slot: "Biceps",
+      category: "Arms",
+      level: "Beginner",
+      equipment: "5kg dumbbells",
+      sets: 3,
+      reps: "10 to 15",
+      rest: 45,
+      type: "curl",
+      target: "Biceps, forearms",
+      progressionGoal: "Complete 3 sets of 15 reps",
+      makeHarder: "Pause at top",
+      nextExercise: "Cross-Body Hammer Curl",
+    }),
+    ex({
+      name: "Concentration Curl",
+      slot: "Biceps",
+      category: "Arms",
+      level: "Intermediate",
+      equipment: "Dumbbell",
+      sets: 2,
+      reps: "10 to 12 each arm",
+      rest: 45,
+      type: "curl",
+      target: "Biceps",
+      progressionGoal: "Complete 2 sets of 12 reps each arm",
+      makeHarder: "Pause at top",
+      nextExercise: "Zottman Curl",
+    }),
+    ex({
+      name: "Zottman Curl",
+      slot: "Biceps",
+      category: "Arms",
+      level: "Intermediate",
+      equipment: "Dumbbells",
+      sets: 2,
+      reps: "8 to 12",
+      rest: 45,
+      type: "curl",
+      target: "Biceps, forearms",
+      progressionGoal: "Complete 2 sets of 12 reps",
+      makeHarder: "Slow lowering",
+      nextExercise: "Curl 21s",
+    }),
   ],
   legsSquat: [
-    ex({ name: "Bodyweight Squat", slot: "Squat", category: "Legs", level: "Beginner", equipment: "None", sets: 3, reps: "10 to 15", rest: 60, type: "squat", target: "Quads, glutes", progressionGoal: "Complete 3 sets of 15 reps", makeHarder: "Move to goblet squat", nextExercise: "Dumbbell Goblet Squat" }),
-    ex({ name: "Chair Squat", slot: "Squat", category: "Legs", level: "Beginner", equipment: "Chair", sets: 3, reps: "8 to 12", rest: 60, type: "squat", target: "Quads, glutes", progressionGoal: "Complete 3 sets of 12 reps", makeHarder: "Use lower chair", nextExercise: "Bodyweight Squat" }),
-    ex({ name: "Dumbbell Goblet Squat", slot: "Squat", category: "Legs", level: "Beginner", equipment: "5kg dumbbell", sets: 3, reps: "10 to 15", rest: 60, type: "squat", target: "Quads, glutes, core", progressionGoal: "Complete 3 sets of 15 reps", makeHarder: "Slow the lowering phase to 3 seconds", nextExercise: "Goblet Squat with Pause" }),
-    ex({ name: "Goblet Squat with Pause", slot: "Squat", category: "Legs", level: "Intermediate", equipment: "5kg dumbbell", sets: 3, reps: "10 to 15", rest: 60, type: "squat", target: "Quads, glutes, core", progressionGoal: "Complete 3 sets of 15 reps", makeHarder: "Pause 2 sec at bottom", nextExercise: "Dumbbell Split Squat" })
+    ex({
+      name: "Bodyweight Squat",
+      slot: "Squat",
+      category: "Legs",
+      level: "Beginner",
+      equipment: "None",
+      sets: 3,
+      reps: "10 to 15",
+      rest: 60,
+      type: "squat",
+      target: "Quads, glutes",
+      progressionGoal: "Complete 3 sets of 15 reps",
+      makeHarder: "Move to goblet squat",
+      nextExercise: "Dumbbell Goblet Squat",
+    }),
+    ex({
+      name: "Chair Squat",
+      slot: "Squat",
+      category: "Legs",
+      level: "Beginner",
+      equipment: "Chair",
+      sets: 3,
+      reps: "8 to 12",
+      rest: 60,
+      type: "squat",
+      target: "Quads, glutes",
+      progressionGoal: "Complete 3 sets of 12 reps",
+      makeHarder: "Use lower chair",
+      nextExercise: "Bodyweight Squat",
+    }),
+    ex({
+      name: "Dumbbell Goblet Squat",
+      slot: "Squat",
+      category: "Legs",
+      level: "Beginner",
+      equipment: "5kg dumbbell",
+      sets: 3,
+      reps: "10 to 15",
+      rest: 60,
+      type: "squat",
+      target: "Quads, glutes, core",
+      progressionGoal: "Complete 3 sets of 15 reps",
+      makeHarder: "Slow the lowering phase to 3 seconds",
+      nextExercise: "Goblet Squat with Pause",
+    }),
+    ex({
+      name: "Goblet Squat with Pause",
+      slot: "Squat",
+      category: "Legs",
+      level: "Intermediate",
+      equipment: "5kg dumbbell",
+      sets: 3,
+      reps: "10 to 15",
+      rest: 60,
+      type: "squat",
+      target: "Quads, glutes, core",
+      progressionGoal: "Complete 3 sets of 15 reps",
+      makeHarder: "Pause 2 sec at bottom",
+      nextExercise: "Dumbbell Split Squat",
+    }),
   ],
   legsHinge: [
-    ex({ name: "Dumbbell Romanian Deadlift", slot: "Hinge", category: "Legs", level: "Beginner", equipment: "5kg dumbbells", sets: 3, reps: "10 to 15", rest: 60, type: "rdl", target: "Hamstrings, glutes, back", progressionGoal: "Complete 3 sets of 15 reps", makeHarder: "Slow tempo", nextExercise: "Single-Leg Romanian Deadlift" }),
-    ex({ name: "Dumbbell Deadlift", slot: "Hinge", category: "Full Body", level: "Beginner", equipment: "Dumbbells", sets: 3, reps: "10 to 15", rest: 60, type: "rdl", target: "Glutes, hamstrings, back", progressionGoal: "Complete 3 sets of 15 reps", makeHarder: "Slow the lowering phase", nextExercise: "Dumbbell Romanian Deadlift" }),
-    ex({ name: "Single-Leg Romanian Deadlift", slot: "Hinge", category: "Legs", level: "Intermediate", equipment: "Dumbbells", sets: 3, reps: "8 to 12 each leg", rest: 60, type: "rdl", target: "Hamstrings, glutes, balance", progressionGoal: "Complete 3 sets of 12 each leg", makeHarder: "Slow tempo", nextExercise: "Single-Leg RDL With Pause" })
+    ex({
+      name: "Dumbbell Romanian Deadlift",
+      slot: "Hinge",
+      category: "Legs",
+      level: "Beginner",
+      equipment: "5kg dumbbells",
+      sets: 3,
+      reps: "10 to 15",
+      rest: 60,
+      type: "rdl",
+      target: "Hamstrings, glutes, back",
+      progressionGoal: "Complete 3 sets of 15 reps",
+      makeHarder: "Slow tempo",
+      nextExercise: "Single-Leg Romanian Deadlift",
+    }),
+    ex({
+      name: "Dumbbell Deadlift",
+      slot: "Hinge",
+      category: "Full Body",
+      level: "Beginner",
+      equipment: "Dumbbells",
+      sets: 3,
+      reps: "10 to 15",
+      rest: 60,
+      type: "rdl",
+      target: "Glutes, hamstrings, back",
+      progressionGoal: "Complete 3 sets of 15 reps",
+      makeHarder: "Slow the lowering phase",
+      nextExercise: "Dumbbell Romanian Deadlift",
+    }),
+    ex({
+      name: "Single-Leg Romanian Deadlift",
+      slot: "Hinge",
+      category: "Legs",
+      level: "Intermediate",
+      equipment: "Dumbbells",
+      sets: 3,
+      reps: "8 to 12 each leg",
+      rest: 60,
+      type: "rdl",
+      target: "Hamstrings, glutes, balance",
+      progressionGoal: "Complete 3 sets of 12 each leg",
+      makeHarder: "Slow tempo",
+      nextExercise: "Single-Leg RDL With Pause",
+    }),
   ],
   singleLeg: [
-    ex({ name: "Reverse Lunge", slot: "Single-leg", category: "Legs", level: "Beginner", equipment: "None", sets: 2, reps: "6 to 10 each leg", rest: 60, type: "lunge", target: "Quads, glutes", progressionGoal: "Complete 2 sets of 10 each leg", makeHarder: "Hold dumbbells", nextExercise: "Dumbbell Split Squat" }),
-    ex({ name: "Step-Ups", slot: "Single-leg", category: "Legs", level: "Intermediate", equipment: "Chair/step", sets: 3, reps: "8 to 12 each leg", rest: 60, type: "stepUp", target: "Quads, glutes", progressionGoal: "Complete 3 sets of 12 each leg", makeHarder: "Hold dumbbells", nextExercise: "Bulgarian Split Squat" }),
-    ex({ name: "Dumbbell Split Squat", slot: "Single-leg", category: "Legs", level: "Intermediate", equipment: "5kg dumbbells", sets: 3, reps: "8 to 12 each leg", rest: 60, type: "lunge", target: "Quads, glutes", progressionGoal: "Complete 3 sets of 12 each leg", makeHarder: "Add slow 3 sec lowering", nextExercise: "Bulgarian Split Squat" })
+    ex({
+      name: "Reverse Lunge",
+      slot: "Single-leg",
+      category: "Legs",
+      level: "Beginner",
+      equipment: "None",
+      sets: 2,
+      reps: "6 to 10 each leg",
+      rest: 60,
+      type: "lunge",
+      target: "Quads, glutes",
+      progressionGoal: "Complete 2 sets of 10 each leg",
+      makeHarder: "Hold dumbbells",
+      nextExercise: "Dumbbell Split Squat",
+    }),
+    ex({
+      name: "Step-Ups",
+      slot: "Single-leg",
+      category: "Legs",
+      level: "Intermediate",
+      equipment: "Chair/step",
+      sets: 3,
+      reps: "8 to 12 each leg",
+      rest: 60,
+      type: "stepUp",
+      target: "Quads, glutes",
+      progressionGoal: "Complete 3 sets of 12 each leg",
+      makeHarder: "Hold dumbbells",
+      nextExercise: "Bulgarian Split Squat",
+    }),
+    ex({
+      name: "Dumbbell Split Squat",
+      slot: "Single-leg",
+      category: "Legs",
+      level: "Intermediate",
+      equipment: "5kg dumbbells",
+      sets: 3,
+      reps: "8 to 12 each leg",
+      rest: 60,
+      type: "lunge",
+      target: "Quads, glutes",
+      progressionGoal: "Complete 3 sets of 12 each leg",
+      makeHarder: "Add slow 3 sec lowering",
+      nextExercise: "Bulgarian Split Squat",
+    }),
   ],
   calvesGlutes: [
-    ex({ name: "Glute Bridge", slot: "Calves/glutes", category: "Legs", level: "Beginner", equipment: "None", sets: 3, reps: "12 to 20", rest: 45, type: "gluteBridge", target: "Glutes, hamstrings", progressionGoal: "Complete 3 sets of 20 reps", makeHarder: "Single-leg glute bridge", nextExercise: "Single-Leg Glute Bridge" }),
-    ex({ name: "Calf Raise", slot: "Calves/glutes", category: "Legs", level: "Beginner", equipment: "None", sets: 3, reps: "15 to 25", rest: 45, type: "calfRaise", target: "Calves", progressionGoal: "Complete 3 sets of 25 reps", makeHarder: "Hold dumbbells", nextExercise: "Weighted Calf Raise" }),
-    ex({ name: "Wall Sit", slot: "Calves/glutes", category: "Legs", level: "Beginner", equipment: "Wall", sets: 2, reps: "30 to 45 sec", rest: 60, type: "squat", target: "Quads, glutes", progressionGoal: "Hold 2 sets of 45 sec", makeHarder: "Hold dumbbell", nextExercise: "Goblet Squat with Pause" }),
-    ex({ name: "Single-Leg Glute Bridge", slot: "Calves/glutes", category: "Legs", level: "Intermediate", equipment: "None", sets: 3, reps: "10 to 15 each leg", rest: 45, type: "gluteBridge", target: "Glutes, hamstrings", progressionGoal: "Complete 3 sets of 15 each leg", makeHarder: "Hold top for 2 sec", nextExercise: "Single-Leg Romanian Deadlift" })
+    ex({
+      name: "Glute Bridge",
+      slot: "Calves/glutes",
+      category: "Legs",
+      level: "Beginner",
+      equipment: "None",
+      sets: 3,
+      reps: "12 to 20",
+      rest: 45,
+      type: "gluteBridge",
+      target: "Glutes, hamstrings",
+      progressionGoal: "Complete 3 sets of 20 reps",
+      makeHarder: "Single-leg glute bridge",
+      nextExercise: "Single-Leg Glute Bridge",
+    }),
+    ex({
+      name: "Calf Raise",
+      slot: "Calves/glutes",
+      category: "Legs",
+      level: "Beginner",
+      equipment: "None",
+      sets: 3,
+      reps: "15 to 25",
+      rest: 45,
+      type: "calfRaise",
+      target: "Calves",
+      progressionGoal: "Complete 3 sets of 25 reps",
+      makeHarder: "Hold dumbbells",
+      nextExercise: "Weighted Calf Raise",
+    }),
+    ex({
+      name: "Wall Sit",
+      slot: "Calves/glutes",
+      category: "Legs",
+      level: "Beginner",
+      equipment: "Wall",
+      sets: 2,
+      reps: "30 to 45 sec",
+      rest: 60,
+      type: "squat",
+      target: "Quads, glutes",
+      progressionGoal: "Hold 2 sets of 45 sec",
+      makeHarder: "Hold dumbbell",
+      nextExercise: "Goblet Squat with Pause",
+    }),
+    ex({
+      name: "Single-Leg Glute Bridge",
+      slot: "Calves/glutes",
+      category: "Legs",
+      level: "Intermediate",
+      equipment: "None",
+      sets: 3,
+      reps: "10 to 15 each leg",
+      rest: 45,
+      type: "gluteBridge",
+      target: "Glutes, hamstrings",
+      progressionGoal: "Complete 3 sets of 15 each leg",
+      makeHarder: "Hold top for 2 sec",
+      nextExercise: "Single-Leg Romanian Deadlift",
+    }),
   ],
   core: [
-    ex({ name: "Plank", slot: "Core", category: "Core", level: "Beginner", equipment: "None", sets: 2, reps: "30 to 45 sec", rest: 45, type: "plank", target: "Abs, core stability", progressionGoal: "Hold 2 sets of 45 sec", makeHarder: "Move elbows forward", nextExercise: "Long Plank" }),
-    ex({ name: "Side Plank", slot: "Core", category: "Core", level: "Beginner", equipment: "None", sets: 2, reps: "20 to 30 sec each side", rest: 45, type: "plank", target: "Obliques, core", progressionGoal: "Hold 2 sets of 30 sec each side", makeHarder: "Add hip dips", nextExercise: "Side Plank With Hip Dips" }),
-    ex({ name: "Dead Bug", slot: "Core", category: "Core", level: "Beginner", equipment: "None", sets: 2, reps: "8 to 12 each side", rest: 45, type: "deadBug", target: "Abs, lower back control", progressionGoal: "Complete 2 sets of 12 each side", makeHarder: "Move slower", nextExercise: "Hollow Body Hold" }),
-    ex({ name: "Plank Shoulder Tap", slot: "Core", category: "Core", level: "Intermediate", equipment: "None", sets: 2, reps: "10 to 20 total", rest: 45, type: "plank", target: "Core, shoulders", progressionGoal: "Complete 2 sets of 20 total", makeHarder: "Reduce hip movement", nextExercise: "Push-Up to Shoulder Tap" })
+    ex({
+      name: "Plank",
+      slot: "Core",
+      category: "Core",
+      level: "Beginner",
+      equipment: "None",
+      sets: 2,
+      reps: "30 to 45 sec",
+      rest: 45,
+      type: "plank",
+      target: "Abs, core stability",
+      progressionGoal: "Hold 2 sets of 45 sec",
+      makeHarder: "Move elbows forward",
+      nextExercise: "Long Plank",
+    }),
+    ex({
+      name: "Side Plank",
+      slot: "Core",
+      category: "Core",
+      level: "Beginner",
+      equipment: "None",
+      sets: 2,
+      reps: "20 to 30 sec each side",
+      rest: 45,
+      type: "plank",
+      target: "Obliques, core",
+      progressionGoal: "Hold 2 sets of 30 sec each side",
+      makeHarder: "Add hip dips",
+      nextExercise: "Side Plank With Hip Dips",
+    }),
+    ex({
+      name: "Dead Bug",
+      slot: "Core",
+      category: "Core",
+      level: "Beginner",
+      equipment: "None",
+      sets: 2,
+      reps: "8 to 12 each side",
+      rest: 45,
+      type: "deadBug",
+      target: "Abs, lower back control",
+      progressionGoal: "Complete 2 sets of 12 each side",
+      makeHarder: "Move slower",
+      nextExercise: "Hollow Body Hold",
+    }),
+    ex({
+      name: "Plank Shoulder Tap",
+      slot: "Core",
+      category: "Core",
+      level: "Intermediate",
+      equipment: "None",
+      sets: 2,
+      reps: "10 to 20 total",
+      rest: 45,
+      type: "plank",
+      target: "Core, shoulders",
+      progressionGoal: "Complete 2 sets of 20 total",
+      makeHarder: "Reduce hip movement",
+      nextExercise: "Push-Up to Shoulder Tap",
+    }),
   ],
   carry: [
-    ex({ name: "Farmer’s Carry", slot: "Core/carry", category: "Full Body", level: "Beginner", equipment: "Dumbbells", sets: 3, reps: "30 to 60 sec", rest: 45, type: "curl", target: "Grip, traps, core", progressionGoal: "Hold 3 sets of 60 sec", makeHarder: "Walk slower or add books", nextExercise: "Suitcase Carry" }),
-    ex({ name: "Suitcase Carry", slot: "Core/carry", category: "Full Body", level: "Intermediate", equipment: "One dumbbell", sets: 3, reps: "30 to 45 sec each side", rest: 45, type: "curl", target: "Core, grip, obliques", progressionGoal: "Complete 3 sets of 45 sec each side", makeHarder: "Walk slower", nextExercise: "Heavier Suitcase Carry" })
+    ex({
+      name: "Farmer’s Carry",
+      slot: "Core/carry",
+      category: "Full Body",
+      level: "Beginner",
+      equipment: "Dumbbells",
+      sets: 3,
+      reps: "30 to 60 sec",
+      rest: 45,
+      type: "curl",
+      target: "Grip, traps, core",
+      progressionGoal: "Hold 3 sets of 60 sec",
+      makeHarder: "Walk slower or add books",
+      nextExercise: "Suitcase Carry",
+    }),
+    ex({
+      name: "Suitcase Carry",
+      slot: "Core/carry",
+      category: "Full Body",
+      level: "Intermediate",
+      equipment: "One dumbbell",
+      sets: 3,
+      reps: "30 to 45 sec each side",
+      rest: 45,
+      type: "curl",
+      target: "Core, grip, obliques",
+      progressionGoal: "Complete 3 sets of 45 sec each side",
+      makeHarder: "Walk slower",
+      nextExercise: "Heavier Suitcase Carry",
+    }),
   ],
   fullBody: [
-    ex({ name: "Squat to Press", slot: "Full Body", category: "Full Body", level: "Beginner", equipment: "Dumbbells", sets: 3, reps: "8 to 12", rest: 75, type: "press", target: "Legs, shoulders, core", progressionGoal: "Complete 3 sets of 12 reps", makeHarder: "Slow the squat and press strongly", nextExercise: "Dumbbell Thruster" }),
-    ex({ name: "Push-Up to Shoulder Tap", slot: "Full Body", category: "Full Body", level: "Beginner", equipment: "None", sets: 3, reps: "6 to 10", rest: 60, type: "pushup", target: "Chest, shoulders, core", progressionGoal: "Complete 3 sets of 10 reps", makeHarder: "Reduce hip movement", nextExercise: "Push-Up to Row Motion" }),
-    ex({ name: "Dumbbell Deadlift", slot: "Full Body", category: "Full Body", level: "Beginner", equipment: "Dumbbells", sets: 3, reps: "10 to 15", rest: 60, type: "rdl", target: "Glutes, hamstrings, back", progressionGoal: "Complete 3 sets of 15 reps", makeHarder: "Slow the lowering phase", nextExercise: "Dumbbell Row to RDL" }),
-    ex({ name: "Farmer’s Carry", slot: "Full Body", category: "Full Body", level: "Beginner", equipment: "Dumbbells", sets: 3, reps: "30 to 60 sec", rest: 45, type: "curl", target: "Grip, traps, core", progressionGoal: "Hold 3 sets of 60 sec", makeHarder: "Walk slower or add books", nextExercise: "Suitcase Carry" }),
-    ex({ name: "Squat to Calf Raise", slot: "Full Body", category: "Full Body", level: "Beginner", equipment: "None", sets: 3, reps: "12 to 20", rest: 45, type: "squat", target: "Quads, glutes, calves", progressionGoal: "Complete 3 sets of 20 reps", makeHarder: "Hold dumbbells", nextExercise: "Dumbbell Thruster" }),
-    ex({ name: "Reverse Lunge to Curl", slot: "Full Body", category: "Full Body", level: "Beginner", equipment: "Dumbbells", sets: 2, reps: "8 each leg", rest: 60, type: "lunge", target: "Legs, biceps, balance", progressionGoal: "Complete 2 sets of 8 clean reps each leg", makeHarder: "Slow the lowering phase", nextExercise: "Split Squat to Press" }),
-    ex({ name: "Plank Shoulder Tap", slot: "Full Body", category: "Full Body", level: "Beginner", equipment: "None", sets: 2, reps: "10 each side", rest: 45, type: "plank", target: "Core, shoulders", progressionGoal: "Complete 2 sets of 15 each side", makeHarder: "Reduce hip movement", nextExercise: "Push-Up to Shoulder Tap" }),
-    ex({ name: "Dumbbell Row to RDL", slot: "Full Body", category: "Full Body", level: "Beginner", equipment: "Dumbbells", sets: 3, reps: "8 to 12", rest: 75, type: "rdl", target: "Back, hamstrings, glutes", progressionGoal: "Complete 3 sets of 12 reps", makeHarder: "Slow everything down", nextExercise: "Dumbbell Clean to Press" }),
-    ex({ name: "Dumbbell Thruster", slot: "Full Body", category: "Full Body", level: "Intermediate", equipment: "Dumbbells", sets: 3, reps: "8 to 12", rest: 75, type: "press", target: "Legs, shoulders, conditioning", progressionGoal: "Complete 3 sets of 12 reps", makeHarder: "Slow squat, strong press", nextExercise: "Dumbbell Clean to Press" }),
-    ex({ name: "Burpee Without Jump", slot: "Full Body", category: "Full Body", level: "Intermediate", equipment: "None", sets: 3, reps: "6 to 10", rest: 75, type: "pushup", target: "Full body, core, chest", progressionGoal: "Complete 3 sets of 10 reps", makeHarder: "Add push-up", nextExercise: "Burpee With Push-Up" }),
-    ex({ name: "Suitcase Carry", slot: "Full Body", category: "Full Body", level: "Intermediate", equipment: "One dumbbell", sets: 3, reps: "30 to 45 sec each side", rest: 45, type: "curl", target: "Core, grip, obliques", progressionGoal: "Complete 3 sets of 45 sec each side", makeHarder: "Walk slower", nextExercise: "Heavier Suitcase Carry" }),
-    ex({ name: "Squat, Curl, Press", slot: "Full Body", category: "Full Body", level: "Intermediate", equipment: "Dumbbells", sets: 3, reps: "8 to 12", rest: 75, type: "press", target: "Legs, biceps, shoulders", progressionGoal: "Complete 3 sets of 12 reps", makeHarder: "Slow everything", nextExercise: "Dumbbell Clean to Press" })
-  ]
+    ex({
+      name: "Squat to Press",
+      slot: "Full Body",
+      category: "Full Body",
+      level: "Beginner",
+      equipment: "Dumbbells",
+      sets: 3,
+      reps: "8 to 12",
+      rest: 75,
+      type: "press",
+      target: "Legs, shoulders, core",
+      progressionGoal: "Complete 3 sets of 12 reps",
+      makeHarder: "Slow the squat and press strongly",
+      nextExercise: "Dumbbell Thruster",
+    }),
+    ex({
+      name: "Push-Up to Shoulder Tap",
+      slot: "Full Body",
+      category: "Full Body",
+      level: "Beginner",
+      equipment: "None",
+      sets: 3,
+      reps: "6 to 10",
+      rest: 60,
+      type: "pushup",
+      target: "Chest, shoulders, core",
+      progressionGoal: "Complete 3 sets of 10 reps",
+      makeHarder: "Reduce hip movement",
+      nextExercise: "Push-Up to Row Motion",
+    }),
+    ex({
+      name: "Dumbbell Deadlift",
+      slot: "Full Body",
+      category: "Full Body",
+      level: "Beginner",
+      equipment: "Dumbbells",
+      sets: 3,
+      reps: "10 to 15",
+      rest: 60,
+      type: "rdl",
+      target: "Glutes, hamstrings, back",
+      progressionGoal: "Complete 3 sets of 15 reps",
+      makeHarder: "Slow the lowering phase",
+      nextExercise: "Dumbbell Row to RDL",
+    }),
+    ex({
+      name: "Farmer’s Carry",
+      slot: "Full Body",
+      category: "Full Body",
+      level: "Beginner",
+      equipment: "Dumbbells",
+      sets: 3,
+      reps: "30 to 60 sec",
+      rest: 45,
+      type: "curl",
+      target: "Grip, traps, core",
+      progressionGoal: "Hold 3 sets of 60 sec",
+      makeHarder: "Walk slower or add books",
+      nextExercise: "Suitcase Carry",
+    }),
+    ex({
+      name: "Squat to Calf Raise",
+      slot: "Full Body",
+      category: "Full Body",
+      level: "Beginner",
+      equipment: "None",
+      sets: 3,
+      reps: "12 to 20",
+      rest: 45,
+      type: "squat",
+      target: "Quads, glutes, calves",
+      progressionGoal: "Complete 3 sets of 20 reps",
+      makeHarder: "Hold dumbbells",
+      nextExercise: "Dumbbell Thruster",
+    }),
+    ex({
+      name: "Reverse Lunge to Curl",
+      slot: "Full Body",
+      category: "Full Body",
+      level: "Beginner",
+      equipment: "Dumbbells",
+      sets: 2,
+      reps: "8 each leg",
+      rest: 60,
+      type: "lunge",
+      target: "Legs, biceps, balance",
+      progressionGoal: "Complete 2 sets of 8 clean reps each leg",
+      makeHarder: "Slow the lowering phase",
+      nextExercise: "Split Squat to Press",
+    }),
+    ex({
+      name: "Plank Shoulder Tap",
+      slot: "Full Body",
+      category: "Full Body",
+      level: "Beginner",
+      equipment: "None",
+      sets: 2,
+      reps: "10 each side",
+      rest: 45,
+      type: "plank",
+      target: "Core, shoulders",
+      progressionGoal: "Complete 2 sets of 15 each side",
+      makeHarder: "Reduce hip movement",
+      nextExercise: "Push-Up to Shoulder Tap",
+    }),
+    ex({
+      name: "Dumbbell Row to RDL",
+      slot: "Full Body",
+      category: "Full Body",
+      level: "Beginner",
+      equipment: "Dumbbells",
+      sets: 3,
+      reps: "8 to 12",
+      rest: 75,
+      type: "rdl",
+      target: "Back, hamstrings, glutes",
+      progressionGoal: "Complete 3 sets of 12 reps",
+      makeHarder: "Slow everything down",
+      nextExercise: "Dumbbell Clean to Press",
+    }),
+    ex({
+      name: "Dumbbell Thruster",
+      slot: "Full Body",
+      category: "Full Body",
+      level: "Intermediate",
+      equipment: "Dumbbells",
+      sets: 3,
+      reps: "8 to 12",
+      rest: 75,
+      type: "press",
+      target: "Legs, shoulders, conditioning",
+      progressionGoal: "Complete 3 sets of 12 reps",
+      makeHarder: "Slow squat, strong press",
+      nextExercise: "Dumbbell Clean to Press",
+    }),
+    ex({
+      name: "Burpee Without Jump",
+      slot: "Full Body",
+      category: "Full Body",
+      level: "Intermediate",
+      equipment: "None",
+      sets: 3,
+      reps: "6 to 10",
+      rest: 75,
+      type: "pushup",
+      target: "Full body, core, chest",
+      progressionGoal: "Complete 3 sets of 10 reps",
+      makeHarder: "Add push-up",
+      nextExercise: "Burpee With Push-Up",
+    }),
+    ex({
+      name: "Suitcase Carry",
+      slot: "Full Body",
+      category: "Full Body",
+      level: "Intermediate",
+      equipment: "One dumbbell",
+      sets: 3,
+      reps: "30 to 45 sec each side",
+      rest: 45,
+      type: "curl",
+      target: "Core, grip, obliques",
+      progressionGoal: "Complete 3 sets of 45 sec each side",
+      makeHarder: "Walk slower",
+      nextExercise: "Heavier Suitcase Carry",
+    }),
+    ex({
+      name: "Squat, Curl, Press",
+      slot: "Full Body",
+      category: "Full Body",
+      level: "Intermediate",
+      equipment: "Dumbbells",
+      sets: 3,
+      reps: "8 to 12",
+      rest: 75,
+      type: "press",
+      target: "Legs, biceps, shoulders",
+      progressionGoal: "Complete 3 sets of 12 reps",
+      makeHarder: "Slow everything",
+      nextExercise: "Dumbbell Clean to Press",
+    }),
+  ],
 };
 
 const DAY_CONFIG = {
   Monday: {
     title: "Push Day",
     focus: "Random push exercises from the push library",
-    poolKeys: ["pushChest", "pushShoulder", "pushTriceps"]
+    poolKeys: ["pushChest", "pushShoulder", "pushTriceps"],
   },
   Wednesday: {
     title: "Pull Day",
     focus: "Random pull exercises from the pull library",
-    poolKeys: ["pullRow", "pullBack", "biceps"]
+    poolKeys: ["pullRow", "pullBack", "biceps"],
   },
   Friday: {
     title: "Leg Day",
     focus: "Random leg exercises from the leg library",
-    poolKeys: ["legsSquat", "legsHinge", "singleLeg", "calvesGlutes"]
+    poolKeys: ["legsSquat", "legsHinge", "singleLeg", "calvesGlutes"],
   },
   Saturday: {
     title: "Optional Full Body",
-    focus: "Random full-body exercises from the full-body library. Only do this if you feel good.",
-    poolKeys: ["fullBody"]
-  }
+    focus:
+      "Random full-body exercises from the full-body library. Only do this if you feel good.",
+    poolKeys: ["fullBody"],
+  },
 };
 
 const DEMO_TEXT = {
@@ -196,7 +970,7 @@ const DEMO_TEXT = {
   reverseFly: "Open arms wide and squeeze your upper back.",
   calfRaise: "Rise onto your toes and lower slowly.",
   lateralRaise: "Raise dumbbells to shoulder height and lower slowly.",
-  stretch: "Move gently, breathe slowly, and avoid pain."
+  stretch: "Move gently, breathe slowly, and avoid pain.",
 };
 
 function formatTime(seconds) {
@@ -261,7 +1035,7 @@ function cloneExercise(exercise) {
 }
 
 function pickUnique(pool, random, usedNames) {
-  const options = pool.filter(item => !usedNames.has(item.name));
+  const options = pool.filter((item) => !usedNames.has(item.name));
   const usable = options.length ? options : pool;
   const picked = usable[Math.floor(random() * usable.length) % usable.length];
   usedNames.add(picked.name);
@@ -271,18 +1045,27 @@ function pickUnique(pool, random, usedNames) {
 function buildDayPlan(day, random) {
   const config = DAY_CONFIG[day];
   const usedNames = new Set();
-  const library = config.poolKeys.flatMap(poolKey => EXERCISE_POOLS[poolKey] || []);
-  const exerciseCount = MIN_EXERCISES_PER_WORKOUT + Math.floor(random() * (MAX_EXERCISES_PER_WORKOUT - MIN_EXERCISES_PER_WORKOUT + 1));
+  const library = config.poolKeys.flatMap(
+    (poolKey) => EXERCISE_POOLS[poolKey] || [],
+  );
+  const exerciseCount =
+    MIN_EXERCISES_PER_WORKOUT +
+    Math.floor(
+      random() * (MAX_EXERCISES_PER_WORKOUT - MIN_EXERCISES_PER_WORKOUT + 1),
+    );
   const exercises = [];
 
-  while (exercises.length < exerciseCount && exercises.length < library.length) {
+  while (
+    exercises.length < exerciseCount &&
+    exercises.length < library.length
+  ) {
     exercises.push(pickUnique(library, random, usedNames));
   }
 
   return {
     title: config.title,
     focus: `${config.focus}. ${exercises.length} exercises chosen for this session.`,
-    exercises
+    exercises,
   };
 }
 
@@ -297,12 +1080,14 @@ function buildWeeklyPlan(weekStartKey, userSeed = "ezra") {
     days: DAYS.reduce((days, day) => {
       days[day] = buildDayPlan(day, random);
       return days;
-    }, {})
+    }, {}),
   };
 }
 
 function getDayPlan(weeklyPlan, day) {
-  return weeklyPlan?.days?.[day] || buildWeeklyPlan(getWeekStartKey()).days[day];
+  return (
+    weeklyPlan?.days?.[day] || buildWeeklyPlan(getWeekStartKey()).days[day]
+  );
 }
 
 function getExerciseKey(weekStartKey, day, index) {
@@ -311,20 +1096,26 @@ function getExerciseKey(weekStartKey, day, index) {
 
 function getDayProgress(weeklyPlan, day, completed) {
   const exercises = getDayPlan(weeklyPlan, day).exercises;
-  const done = exercises.filter((_, index) => completed[getExerciseKey(weeklyPlan.weekStart, day, index)]).length;
+  const done = exercises.filter(
+    (_, index) => completed[getExerciseKey(weeklyPlan.weekStart, day, index)],
+  ).length;
   return Math.round((done / exercises.length) * 100);
 }
 
 function getWeekProgress(weeklyPlan, completed) {
-  const keys = MAIN_DAYS.flatMap(day =>
-    getDayPlan(weeklyPlan, day).exercises.map((_, index) => getExerciseKey(weeklyPlan.weekStart, day, index))
+  const keys = MAIN_DAYS.flatMap((day) =>
+    getDayPlan(weeklyPlan, day).exercises.map((_, index) =>
+      getExerciseKey(weeklyPlan.weekStart, day, index),
+    ),
   );
-  const done = keys.filter(key => completed[key]).length;
+  const done = keys.filter((key) => completed[key]).length;
   return Math.round((done / keys.length) * 100);
 }
 
 function isMainWeekComplete(weeklyPlan, completed) {
-  return MAIN_DAYS.every(day => getDayProgress(weeklyPlan, day, completed) === 100);
+  return MAIN_DAYS.every(
+    (day) => getDayProgress(weeklyPlan, day, completed) === 100,
+  );
 }
 
 function getTotalSets(dayPlan) {
@@ -332,12 +1123,17 @@ function getTotalSets(dayPlan) {
 }
 
 function isValidWorkoutLength(dayPlan) {
-  return dayPlan.exercises.length >= MIN_EXERCISES_PER_WORKOUT && dayPlan.exercises.length <= MAX_EXERCISES_PER_WORKOUT;
+  return (
+    dayPlan.exercises.length >= MIN_EXERCISES_PER_WORKOUT &&
+    dayPlan.exercises.length <= MAX_EXERCISES_PER_WORKOUT
+  );
 }
 
 function getWorkoutLengthLabel(dayPlan) {
-  if (dayPlan.exercises.length === MIN_EXERCISES_PER_WORKOUT) return "Minimum session";
-  if (dayPlan.exercises.length === MAX_EXERCISES_PER_WORKOUT) return "Maximum session";
+  if (dayPlan.exercises.length === MIN_EXERCISES_PER_WORKOUT)
+    return "Minimum session";
+  if (dayPlan.exercises.length === MAX_EXERCISES_PER_WORKOUT)
+    return "Maximum session";
   return "Ideal session";
 }
 
@@ -357,41 +1153,183 @@ function getExerciseTimerSeconds(exercise) {
 
 function getDetails(exercise) {
   const shared = {
-    description: "Move slowly, control the lowering phase, and stop if anything feels sharp or painful.",
-    steps: ["Set your starting position.", "Brace your core.", "Move with control.", "Reset before the next rep."],
-    avoid: "Do not rush or use painful range of motion."
+    description:
+      "Move slowly, control the lowering phase, and stop if anything feels sharp or painful.",
+    steps: [
+      "Set your starting position.",
+      "Brace your core.",
+      "Move with control.",
+      "Reset before the next rep.",
+    ],
+    avoid: "Do not rush or use painful range of motion.",
   };
 
   const details = {
-    pushup: ["Keep your body straight and lower your chest under control.", ["Hands slightly wider than shoulders.", "Brace abs and glutes.", "Lower slowly.", "Push back up."], "Do not let your hips sag."],
-    squat: ["Squat with control while keeping your chest tall.", ["Feet around shoulder width.", "Hold the dumbbell close if loaded.", "Sit down slowly.", "Stand tall."], "Do not force painful depth."],
-    floorPress: ["Press dumbbells from the floor and lower them slowly.", ["Lie on your back.", "Start with elbows on the floor.", "Press up.", "Lower with control."], "Do not bounce your elbows."],
-    row: ["Pull toward your hip while keeping your back flat.", ["Hinge forward.", "Keep back flat.", "Pull elbow toward hip.", "Lower slowly."], "Do not twist your body."],
-    bodyRow: ["Pull your chest toward the table or bedsheet while keeping your body straight.", ["Grip firmly.", "Keep body straight.", "Pull chest up.", "Lower slowly."], "Do not bend your hips to cheat."],
-    rdl: ["Hinge your hips backward, then squeeze your glutes to stand.", ["Hold dumbbells in front.", "Bend knees slightly.", "Push hips back.", "Stand tall."], "Do not round your back."],
-    plank: ["Hold a straight line while bracing abs and glutes.", ["Elbows under shoulders.", "Straight body.", "Squeeze abs and glutes.", "Breathe steadily."], "Do not let hips drop."],
-    press: ["Press overhead or extend with your core tight.", ["Start controlled.", "Brace core.", "Press or extend smoothly.", "Lower slowly."], "Do not lean back."],
-    curl: ["Curl or carry without swinging your body.", ["Stand tall.", "Keep shoulders controlled.", "Move smoothly.", "Lower or hold with control."], "Do not swing."],
-    gluteBridge: ["Lift your hips by squeezing your glutes.", ["Lie with knees bent.", "Feet flat.", "Lift hips.", "Lower slowly."], "Do not over-arch your back."],
-    deadBug: ["Move opposite arm and leg while keeping your back controlled.", ["Lie on your back.", "Brace core.", "Lower opposite arm and leg.", "Switch sides."], "Do not arch your lower back."],
-    stretch: ["Stretch gently and breathe slowly.", ["Get into position.", "Move gently.", "Hold the stretch.", "Stop if it hurts."], "Do not force pain."]
+    pushup: [
+      "Keep your body straight and lower your chest under control.",
+      [
+        "Hands slightly wider than shoulders.",
+        "Brace abs and glutes.",
+        "Lower slowly.",
+        "Push back up.",
+      ],
+      "Do not let your hips sag.",
+    ],
+    squat: [
+      "Squat with control while keeping your chest tall.",
+      [
+        "Feet around shoulder width.",
+        "Hold the dumbbell close if loaded.",
+        "Sit down slowly.",
+        "Stand tall.",
+      ],
+      "Do not force painful depth.",
+    ],
+    floorPress: [
+      "Press dumbbells from the floor and lower them slowly.",
+      [
+        "Lie on your back.",
+        "Start with elbows on the floor.",
+        "Press up.",
+        "Lower with control.",
+      ],
+      "Do not bounce your elbows.",
+    ],
+    row: [
+      "Pull toward your hip while keeping your back flat.",
+      [
+        "Hinge forward.",
+        "Keep back flat.",
+        "Pull elbow toward hip.",
+        "Lower slowly.",
+      ],
+      "Do not twist your body.",
+    ],
+    bodyRow: [
+      "Pull your chest toward the table or bedsheet while keeping your body straight.",
+      [
+        "Grip firmly.",
+        "Keep body straight.",
+        "Pull chest up.",
+        "Lower slowly.",
+      ],
+      "Do not bend your hips to cheat.",
+    ],
+    rdl: [
+      "Hinge your hips backward, then squeeze your glutes to stand.",
+      [
+        "Hold dumbbells in front.",
+        "Bend knees slightly.",
+        "Push hips back.",
+        "Stand tall.",
+      ],
+      "Do not round your back.",
+    ],
+    plank: [
+      "Hold a straight line while bracing abs and glutes.",
+      [
+        "Elbows under shoulders.",
+        "Straight body.",
+        "Squeeze abs and glutes.",
+        "Breathe steadily.",
+      ],
+      "Do not let hips drop.",
+    ],
+    press: [
+      "Press overhead or extend with your core tight.",
+      [
+        "Start controlled.",
+        "Brace core.",
+        "Press or extend smoothly.",
+        "Lower slowly.",
+      ],
+      "Do not lean back.",
+    ],
+    curl: [
+      "Curl or carry without swinging your body.",
+      [
+        "Stand tall.",
+        "Keep shoulders controlled.",
+        "Move smoothly.",
+        "Lower or hold with control.",
+      ],
+      "Do not swing.",
+    ],
+    gluteBridge: [
+      "Lift your hips by squeezing your glutes.",
+      ["Lie with knees bent.", "Feet flat.", "Lift hips.", "Lower slowly."],
+      "Do not over-arch your back.",
+    ],
+    deadBug: [
+      "Move opposite arm and leg while keeping your back controlled.",
+      [
+        "Lie on your back.",
+        "Brace core.",
+        "Lower opposite arm and leg.",
+        "Switch sides.",
+      ],
+      "Do not arch your lower back.",
+    ],
+    stretch: [
+      "Stretch gently and breathe slowly.",
+      [
+        "Get into position.",
+        "Move gently.",
+        "Hold the stretch.",
+        "Stop if it hurts.",
+      ],
+      "Do not force pain.",
+    ],
   };
 
   const chosen = details[exercise.type] || shared;
-  if (Array.isArray(chosen)) return { description: chosen[0], steps: chosen[1], avoid: chosen[2] };
+  if (Array.isArray(chosen))
+    return { description: chosen[0], steps: chosen[1], avoid: chosen[2] };
   return chosen;
 }
 
 const ALL_EXERCISES = Object.values(EXERCISE_POOLS).flat();
 const SAMPLE_PLAN = buildWeeklyPlan("2026-06-01", "test-user");
-console.assert(DAYS.every(day => isValidWorkoutLength(SAMPLE_PLAN.days[day])), "Every generated workout must have 4 to 6 exercises.");
-console.assert(SAMPLE_PLAN.days.Monday.exercises.every(item => item.category === "Push" || item.category === "Shoulders" || item.category === "Arms"), "Monday must only use the push library.");
-console.assert(SAMPLE_PLAN.days.Wednesday.exercises.every(item => item.category === "Pull" || item.category === "Arms"), "Wednesday must only use the pull library.");
-console.assert(SAMPLE_PLAN.days.Friday.exercises.every(item => item.category === "Legs" || item.category === "Full Body"), "Friday must only use the leg library.");
-console.assert(SAMPLE_PLAN.days.Saturday.exercises.every(item => item.category === "Full Body"), "Saturday must only use the full-body library.");
-console.assert(formatTime(75) === "01:15", "75 seconds should format as 01:15.");
+console.assert(
+  DAYS.every((day) => isValidWorkoutLength(SAMPLE_PLAN.days[day])),
+  "Every generated workout must have 4 to 6 exercises.",
+);
+console.assert(
+  SAMPLE_PLAN.days.Monday.exercises.every(
+    (item) =>
+      item.category === "Push" ||
+      item.category === "Shoulders" ||
+      item.category === "Arms",
+  ),
+  "Monday must only use the push library.",
+);
+console.assert(
+  SAMPLE_PLAN.days.Wednesday.exercises.every(
+    (item) => item.category === "Pull" || item.category === "Arms",
+  ),
+  "Wednesday must only use the pull library.",
+);
+console.assert(
+  SAMPLE_PLAN.days.Friday.exercises.every(
+    (item) => item.category === "Legs" || item.category === "Full Body",
+  ),
+  "Friday must only use the leg library.",
+);
+console.assert(
+  SAMPLE_PLAN.days.Saturday.exercises.every(
+    (item) => item.category === "Full Body",
+  ),
+  "Saturday must only use the full-body library.",
+);
+console.assert(
+  formatTime(75) === "01:15",
+  "75 seconds should format as 01:15.",
+);
 console.assert(formatTime(0) === "00:00", "0 seconds should format as 00:00.");
-console.assert(ALL_EXERCISES.every(item => Boolean(DEMO_TEXT[item.type])), "Every exercise type needs demo text.");
+console.assert(
+  ALL_EXERCISES.every((item) => Boolean(DEMO_TEXT[item.type])),
+  "Every exercise type needs demo text.",
+);
 
 function AuthGate({ children }) {
   const [session, setSession] = useState(null);
@@ -412,9 +1350,11 @@ function AuthGate({ children }) {
       setAuthLoading(false);
     });
 
-    const { data } = supabase.auth.onAuthStateChange((_event, currentSession) => {
-      setSession(currentSession || null);
-    });
+    const { data } = supabase.auth.onAuthStateChange(
+      (_event, currentSession) => {
+        setSession(currentSession || null);
+      },
+    );
 
     return () => {
       data.subscription.unsubscribe();
@@ -432,7 +1372,7 @@ function AuthGate({ children }) {
 
     const credentials = {
       email: email.trim(),
-      password
+      password,
     };
 
     const result =
@@ -446,7 +1386,9 @@ function AuthGate({ children }) {
     }
 
     if (mode === "signup") {
-      setAuthMessage("Account created. Now log in. After that, disable signups in Supabase.");
+      setAuthMessage(
+        "Account created. Now log in. After that, disable signups in Supabase.",
+      );
       setMode("login");
       setPassword("");
     }
@@ -475,10 +1417,12 @@ function AuthGate({ children }) {
         <div className="mx-auto max-w-xl rounded-[2rem] border border-white/10 bg-slate-900 p-6">
           <h1 className="text-3xl font-black">Connect Supabase first</h1>
           <p className="mt-3 text-slate-300">
-            Add your Supabase keys to a file called <span className="font-bold text-white">.env.local</span> in your project root.
+            Add your Supabase keys to a file called{" "}
+            <span className="font-bold text-white">.env.local</span> in your
+            project root.
           </p>
           <pre className="mt-4 overflow-auto rounded-2xl bg-slate-950 p-4 text-sm text-emerald-300">
-{`VITE_SUPABASE_URL=your_project_url
+            {`VITE_SUPABASE_URL=your_project_url
 VITE_SUPABASE_ANON_KEY=your_anon_key`}
           </pre>
         </div>
@@ -488,71 +1432,30 @@ VITE_SUPABASE_ANON_KEY=your_anon_key`}
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-slate-950 p-4 text-white md:p-8">
-        <div className="mx-auto grid min-h-[85vh] max-w-6xl items-center gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <div>
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm text-slate-200">
-              <Dumbbell size={16} /> Private workout app
-            </div>
-            <h1 className="text-4xl font-black tracking-tight md:text-6xl">Login to your workout coach.</h1>
-            <p className="mt-4 max-w-xl text-slate-300">
-              Create your first account once, then disable signups in Supabase. Your workout progress will sync across devices.
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="rounded-[2rem] border border-white/10 bg-slate-900 p-6 shadow-2xl">
-            <h2 className="text-2xl font-black">{mode === "login" ? "Log in" : "Create first account"}</h2>
-            <p className="mt-2 text-sm text-slate-400">Use your email and password.</p>
-
-            <label className="mt-5 block text-sm font-bold text-slate-300">Email</label>
-            <input
-              value={email}
-              onChange={event => setEmail(event.target.value)}
-              type="email"
-              required
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-white outline-none focus:border-emerald-400"
-            />
-
-            <label className="mt-4 block text-sm font-bold text-slate-300">Password</label>
-            <input
-              value={password}
-              onChange={event => setPassword(event.target.value)}
-              type="password"
-              required
-              minLength={6}
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-white outline-none focus:border-emerald-400"
-            />
-
-            {authMessage && (
-              <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-400/10 p-3 text-sm text-amber-100">
-                {authMessage}
-              </div>
-            )}
-
-            <button type="submit" className="mt-5 w-full rounded-2xl bg-emerald-400 px-5 py-4 font-black text-slate-950">
-              {mode === "login" ? "Log in" : "Create account"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setMode(mode === "login" ? "signup" : "login");
-                setAuthMessage("");
-              }}
-              className="mt-3 w-full rounded-2xl bg-white/10 px-5 py-3 font-bold text-white hover:bg-white/20"
-            >
-              {mode === "login" ? "Create first account" : "Back to login"}
-            </button>
-          </form>
-        </div>
-      </div>
+      <LoginPage
+        mode={mode}
+        email={email}
+        password={password}
+        authMessage={authMessage}
+        onSubmit={handleSubmit}
+        onEmailChange={setEmail}
+        onPasswordChange={setPassword}
+        onToggleMode={() => {
+          setMode(mode === "login" ? "signup" : "login");
+          setAuthMessage("");
+        }}
+      />
     );
   }
 
   return (
     <>
       <div className="fixed right-4 top-4 z-50 rounded-2xl border border-white/10 bg-slate-900/90 p-2 backdrop-blur">
-        <button type="button" onClick={signOut} className="rounded-xl bg-white/10 px-4 py-2 text-sm font-bold text-white hover:bg-white/20">
+        <button
+          type="button"
+          onClick={signOut}
+          className="rounded-xl bg-white/10 px-4 py-2 text-sm font-bold text-white hover:bg-white/20"
+        >
           Sign out
         </button>
       </div>
@@ -563,17 +1466,39 @@ VITE_SUPABASE_ANON_KEY=your_anon_key`}
 
 function MiniAnimation({ type, playing, compact = false }) {
   const loop = playing
-    ? { duration: 1.2, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }
+    ? {
+        duration: 1.2,
+        repeat: Infinity,
+        repeatType: "reverse",
+        ease: "easeInOut",
+      }
     : { duration: 0.2 };
 
-  const isFloor = ["pushup", "floorPress", "bodyRow", "plank", "gluteBridge", "deadBug"].includes(type);
-  const isHinge = ["row", "rdl", "lunge", "stepUp", "reverseFly"].includes(type);
+  const isFloor = [
+    "pushup",
+    "floorPress",
+    "bodyRow",
+    "plank",
+    "gluteBridge",
+    "deadBug",
+  ].includes(type);
+  const isHinge = ["row", "rdl", "lunge", "stepUp", "reverseFly"].includes(
+    type,
+  );
   const isStanding = !isFloor && !isHinge;
 
   function SmallDumbbell({ x, y }) {
     return (
       <g transform={`translate(${x} ${y})`}>
-        <line x1="-9" y1="0" x2="9" y2="0" stroke="#34d399" strokeWidth="4" strokeLinecap="round" />
+        <line
+          x1="-9"
+          y1="0"
+          x2="9"
+          y2="0"
+          stroke="#34d399"
+          strokeWidth="4"
+          strokeLinecap="round"
+        />
         <rect x="-15" y="-7" width="7" height="14" rx="2" fill="#34d399" />
         <rect x="8" y="-7" width="7" height="14" rx="2" fill="#34d399" />
       </g>
@@ -626,10 +1551,34 @@ function MiniAnimation({ type, playing, compact = false }) {
     return (
       <motion.g animate={{ y: bodyMove }} transition={loop}>
         <circle cx="150" cy="48" r="17" fill="white" />
-        <line x1="150" y1="68" x2="150" y2="145" stroke="white" strokeWidth="13" strokeLinecap="round" />
+        <line
+          x1="150"
+          y1="68"
+          x2="150"
+          y2="145"
+          stroke="white"
+          strokeWidth="13"
+          strokeLinecap="round"
+        />
 
-        <line x1="150" y1="86" x2="108" y2="120" stroke="white" strokeWidth="12" strokeLinecap="round" />
-        <line x1="150" y1="86" x2="192" y2="120" stroke="white" strokeWidth="12" strokeLinecap="round" />
+        <line
+          x1="150"
+          y1="86"
+          x2="108"
+          y2="120"
+          stroke="white"
+          strokeWidth="12"
+          strokeLinecap="round"
+        />
+        <line
+          x1="150"
+          y1="86"
+          x2="192"
+          y2="120"
+          stroke="white"
+          strokeWidth="12"
+          strokeLinecap="round"
+        />
 
         <motion.line
           x1="108"
@@ -657,10 +1606,16 @@ function MiniAnimation({ type, playing, compact = false }) {
 
         {(isPress || isCurl || isLateralRaise) && (
           <>
-            <motion.g animate={{ x: leftHand.x, y: leftHand.y }} transition={loop}>
+            <motion.g
+              animate={{ x: leftHand.x, y: leftHand.y }}
+              transition={loop}
+            >
               <SmallDumbbell x={0} y={0} />
             </motion.g>
-            <motion.g animate={{ x: rightHand.x, y: rightHand.y }} transition={loop}>
+            <motion.g
+              animate={{ x: rightHand.x, y: rightHand.y }}
+              transition={loop}
+            >
               <SmallDumbbell x={0} y={0} />
             </motion.g>
           </>
@@ -676,7 +1631,10 @@ function MiniAnimation({ type, playing, compact = false }) {
           stroke="white"
           strokeWidth="13"
           strokeLinecap="round"
-          animate={{ x2: isSquat ? [112, 90, 112] : 112, y2: isCalfRaise ? [235, 220, 235] : 235 }}
+          animate={{
+            x2: isSquat ? [112, 90, 112] : 112,
+            y2: isCalfRaise ? [235, 220, 235] : 235,
+          }}
           transition={loop}
         />
 
@@ -688,7 +1646,10 @@ function MiniAnimation({ type, playing, compact = false }) {
           stroke="white"
           strokeWidth="13"
           strokeLinecap="round"
-          animate={{ x2: isSquat ? [188, 210, 188] : 188, y2: isCalfRaise ? [235, 220, 235] : 235 }}
+          animate={{
+            x2: isSquat ? [188, 210, 188] : 188,
+            y2: isCalfRaise ? [235, 220, 235] : 235,
+          }}
           transition={loop}
         />
 
@@ -709,17 +1670,53 @@ function MiniAnimation({ type, playing, compact = false }) {
       return (
         <g>
           <circle cx="80" cy="205" r="17" fill="white" />
-          <line x1="100" y1="210" x2="205" y2="210" stroke="white" strokeWidth="13" strokeLinecap="round" />
+          <line
+            x1="100"
+            y1="210"
+            x2="205"
+            y2="210"
+            stroke="white"
+            strokeWidth="13"
+            strokeLinecap="round"
+          />
 
-          <motion.line x1="125" y1="202" x2="125" y2="145" stroke="white" strokeWidth="12" strokeLinecap="round" animate={{ y2: [145, 72, 145] }} transition={loop} />
-          <motion.line x1="165" y1="202" x2="165" y2="145" stroke="white" strokeWidth="12" strokeLinecap="round" animate={{ y2: [145, 72, 145] }} transition={loop} />
+          <motion.line
+            x1="125"
+            y1="202"
+            x2="125"
+            y2="145"
+            stroke="white"
+            strokeWidth="12"
+            strokeLinecap="round"
+            animate={{ y2: [145, 72, 145] }}
+            transition={loop}
+          />
+          <motion.line
+            x1="165"
+            y1="202"
+            x2="165"
+            y2="145"
+            stroke="white"
+            strokeWidth="12"
+            strokeLinecap="round"
+            animate={{ y2: [145, 72, 145] }}
+            transition={loop}
+          />
 
           <motion.g animate={{ y: [145, 72, 145] }} transition={loop}>
             <SmallDumbbell x={125} y={0} />
             <SmallDumbbell x={165} y={0} />
           </motion.g>
 
-          <line x1="205" y1="210" x2="254" y2="235" stroke="white" strokeWidth="13" strokeLinecap="round" />
+          <line
+            x1="205"
+            y1="210"
+            x2="254"
+            y2="235"
+            stroke="white"
+            strokeWidth="13"
+            strokeLinecap="round"
+          />
           <MotionGuide x={145} y1={78} y2={140} />
         </g>
       );
@@ -729,9 +1726,35 @@ function MiniAnimation({ type, playing, compact = false }) {
       return (
         <g>
           <circle cx="78" cy="220" r="17" fill="white" />
-          <line x1="96" y1="225" x2="135" y2="225" stroke="white" strokeWidth="13" strokeLinecap="round" />
-          <motion.line x1="135" y1="225" x2="190" y2="225" stroke="white" strokeWidth="13" strokeLinecap="round" animate={{ y2: [225, 178, 225] }} transition={loop} />
-          <line x1="190" y1="225" x2="246" y2="235" stroke="white" strokeWidth="13" strokeLinecap="round" />
+          <line
+            x1="96"
+            y1="225"
+            x2="135"
+            y2="225"
+            stroke="white"
+            strokeWidth="13"
+            strokeLinecap="round"
+          />
+          <motion.line
+            x1="135"
+            y1="225"
+            x2="190"
+            y2="225"
+            stroke="white"
+            strokeWidth="13"
+            strokeLinecap="round"
+            animate={{ y2: [225, 178, 225] }}
+            transition={loop}
+          />
+          <line
+            x1="190"
+            y1="225"
+            x2="246"
+            y2="235"
+            stroke="white"
+            strokeWidth="13"
+            strokeLinecap="round"
+          />
           <MotionGuide x={165} y1={175} y2={225} />
         </g>
       );
@@ -741,30 +1764,127 @@ function MiniAnimation({ type, playing, compact = false }) {
       return (
         <g>
           <circle cx="150" cy="205" r="17" fill="white" />
-          <line x1="150" y1="188" x2="150" y2="135" stroke="white" strokeWidth="13" strokeLinecap="round" />
+          <line
+            x1="150"
+            y1="188"
+            x2="150"
+            y2="135"
+            stroke="white"
+            strokeWidth="13"
+            strokeLinecap="round"
+          />
 
-          <motion.line x1="150" y1="150" x2="105" y2="90" stroke="white" strokeWidth="12" strokeLinecap="round" animate={{ x2: [105, 70, 105], y2: [90, 60, 90] }} transition={loop} />
-          <motion.line x1="150" y1="150" x2="195" y2="90" stroke="white" strokeWidth="12" strokeLinecap="round" animate={{ x2: [195, 230, 195], y2: [90, 60, 90] }} transition={loop} />
+          <motion.line
+            x1="150"
+            y1="150"
+            x2="105"
+            y2="90"
+            stroke="white"
+            strokeWidth="12"
+            strokeLinecap="round"
+            animate={{ x2: [105, 70, 105], y2: [90, 60, 90] }}
+            transition={loop}
+          />
+          <motion.line
+            x1="150"
+            y1="150"
+            x2="195"
+            y2="90"
+            stroke="white"
+            strokeWidth="12"
+            strokeLinecap="round"
+            animate={{ x2: [195, 230, 195], y2: [90, 60, 90] }}
+            transition={loop}
+          />
 
-          <motion.line x1="150" y1="135" x2="105" y2="230" stroke="white" strokeWidth="12" strokeLinecap="round" animate={{ x2: [105, 75, 105], y2: [230, 248, 230] }} transition={loop} />
-          <motion.line x1="150" y1="135" x2="195" y2="230" stroke="white" strokeWidth="12" strokeLinecap="round" animate={{ x2: [195, 225, 195], y2: [230, 248, 230] }} transition={loop} />
+          <motion.line
+            x1="150"
+            y1="135"
+            x2="105"
+            y2="230"
+            stroke="white"
+            strokeWidth="12"
+            strokeLinecap="round"
+            animate={{ x2: [105, 75, 105], y2: [230, 248, 230] }}
+            transition={loop}
+          />
+          <motion.line
+            x1="150"
+            y1="135"
+            x2="195"
+            y2="230"
+            stroke="white"
+            strokeWidth="12"
+            strokeLinecap="round"
+            animate={{ x2: [195, 225, 195], y2: [230, 248, 230] }}
+            transition={loop}
+          />
         </g>
       );
     }
 
     return (
-      <motion.g animate={{ y: isPushup ? [0, 25, 0] : isBodyRow ? [18, -14, 18] : 0 }} transition={loop}>
-        {isBodyRow && <line x1="48" y1="92" x2="252" y2="92" stroke="#34d399" strokeWidth="10" strokeLinecap="round" />}
+      <motion.g
+        animate={{ y: isPushup ? [0, 25, 0] : isBodyRow ? [18, -14, 18] : 0 }}
+        transition={loop}
+      >
+        {isBodyRow && (
+          <line
+            x1="48"
+            y1="92"
+            x2="252"
+            y2="92"
+            stroke="#34d399"
+            strokeWidth="10"
+            strokeLinecap="round"
+          />
+        )}
 
         <circle cx="70" cy="155" r="17" fill="white" />
-        <line x1="88" y1="160" x2="195" y2="172" stroke="white" strokeWidth="13" strokeLinecap="round" />
+        <line
+          x1="88"
+          y1="160"
+          x2="195"
+          y2="172"
+          stroke="white"
+          strokeWidth="13"
+          strokeLinecap="round"
+        />
 
-        <line x1="105" y1="170" x2={isBodyRow ? "108" : "95"} y2={isBodyRow ? "92" : "235"} stroke="white" strokeWidth="12" strokeLinecap="round" />
-        <line x1="145" y1="174" x2="145" y2={isBodyRow ? "92" : "235"} stroke="white" strokeWidth="12" strokeLinecap="round" />
+        <line
+          x1="105"
+          y1="170"
+          x2={isBodyRow ? "108" : "95"}
+          y2={isBodyRow ? "92" : "235"}
+          stroke="white"
+          strokeWidth="12"
+          strokeLinecap="round"
+        />
+        <line
+          x1="145"
+          y1="174"
+          x2="145"
+          y2={isBodyRow ? "92" : "235"}
+          stroke="white"
+          strokeWidth="12"
+          strokeLinecap="round"
+        />
 
-        <line x1="195" y1="172" x2="260" y2="235" stroke="white" strokeWidth="13" strokeLinecap="round" />
+        <line
+          x1="195"
+          y1="172"
+          x2="260"
+          y2="235"
+          stroke="white"
+          strokeWidth="13"
+          strokeLinecap="round"
+        />
 
-        {isPlank && <text x="118" y="105" fill="#34d399" fontSize="20" fontWeight="900">HOLD</text>}
+        {isPlank && (
+          <text x="118" y="105" fill="#34d399" fontSize="20" fontWeight="900">
+            HOLD
+          </text>
+        )}
         {!isPlank && <MotionGuide x={150} y1={110} y2={165} />}
       </motion.g>
     );
@@ -779,15 +1899,30 @@ function MiniAnimation({ type, playing, compact = false }) {
 
     return (
       <g>
-        {isStepUp && <rect x="195" y="220" width="72" height="32" rx="6" fill="rgba(52,211,153,.45)" />}
+        {isStepUp && (
+          <rect
+            x="195"
+            y="220"
+            width="72"
+            height="32"
+            rx="6"
+            fill="rgba(52,211,153,.45)"
+          />
+        )}
 
-        <motion.g animate={{ y: isLunge || isStepUp ? [0, 22, 0] : 0 }} transition={loop}>
+        <motion.g
+          animate={{ y: isLunge || isStepUp ? [0, 22, 0] : 0 }}
+          transition={loop}
+        >
           <motion.circle
             cx="112"
             cy="68"
             r="17"
             fill="white"
-            animate={{ cx: isRow || isRdl || isReverseFly ? [112, 95, 112] : 112, cy: isRow || isRdl || isReverseFly ? [68, 105, 68] : 68 }}
+            animate={{
+              cx: isRow || isRdl || isReverseFly ? [112, 95, 112] : 112,
+              cy: isRow || isRdl || isReverseFly ? [68, 105, 68] : 68,
+            }}
             transition={loop}
           />
 
@@ -803,7 +1938,7 @@ function MiniAnimation({ type, playing, compact = false }) {
               x1: isRow || isRdl || isReverseFly ? [125, 105, 125] : 125,
               y1: isRow || isRdl || isReverseFly ? [88, 120, 88] : 88,
               x2: isRow || isRdl || isReverseFly ? [170, 190, 170] : 170,
-              y2: isRow || isRdl || isReverseFly ? [150, 160, 150] : 150
+              y2: isRow || isRdl || isReverseFly ? [150, 160, 150] : 150,
             }}
             transition={loop}
           />
@@ -817,8 +1952,19 @@ function MiniAnimation({ type, playing, compact = false }) {
             strokeWidth="12"
             strokeLinecap="round"
             animate={{
-              x2: isRow ? [108, 185, 108] : isReverseFly ? [108, 70, 108] : isRdl ? [108, 130, 108] : 108,
-              y2: isRow || isReverseFly ? [175, 140, 175] : isRdl ? [175, 215, 175] : 175
+              x2: isRow
+                ? [108, 185, 108]
+                : isReverseFly
+                  ? [108, 70, 108]
+                  : isRdl
+                    ? [108, 130, 108]
+                    : 108,
+              y2:
+                isRow || isReverseFly
+                  ? [175, 140, 175]
+                  : isRdl
+                    ? [175, 215, 175]
+                    : 175,
             }}
             transition={loop}
           />
@@ -826,8 +1972,12 @@ function MiniAnimation({ type, playing, compact = false }) {
           {(isRow || isRdl || isReverseFly) && (
             <motion.g
               animate={{
-                x: isRow ? [108, 185, 108] : isReverseFly ? [108, 70, 108] : [108, 130, 108],
-                y: isRow || isReverseFly ? [175, 140, 175] : [175, 215, 175]
+                x: isRow
+                  ? [108, 185, 108]
+                  : isReverseFly
+                    ? [108, 70, 108]
+                    : [108, 130, 108],
+                y: isRow || isReverseFly ? [175, 140, 175] : [175, 215, 175],
               }}
               transition={loop}
             >
@@ -835,8 +1985,32 @@ function MiniAnimation({ type, playing, compact = false }) {
             </motion.g>
           )}
 
-          <motion.line x1="170" y1="150" x2="120" y2="245" stroke="white" strokeWidth="13" strokeLinecap="round" animate={{ x2: isStepUp ? [120, 202, 120] : isLunge ? [120, 92, 120] : 120 }} transition={loop} />
-          <motion.line x1="170" y1="150" x2="220" y2="245" stroke="white" strokeWidth="13" strokeLinecap="round" animate={{ x2: isStepUp ? [220, 248, 220] : isLunge ? [220, 250, 220] : 220 }} transition={loop} />
+          <motion.line
+            x1="170"
+            y1="150"
+            x2="120"
+            y2="245"
+            stroke="white"
+            strokeWidth="13"
+            strokeLinecap="round"
+            animate={{
+              x2: isStepUp ? [120, 202, 120] : isLunge ? [120, 92, 120] : 120,
+            }}
+            transition={loop}
+          />
+          <motion.line
+            x1="170"
+            y1="150"
+            x2="220"
+            y2="245"
+            stroke="white"
+            strokeWidth="13"
+            strokeLinecap="round"
+            animate={{
+              x2: isStepUp ? [220, 248, 220] : isLunge ? [220, 250, 220] : 220,
+            }}
+            transition={loop}
+          />
 
           <MotionGuide x={155} y1={95} y2={155} />
         </motion.g>
@@ -846,23 +2020,41 @@ function MiniAnimation({ type, playing, compact = false }) {
 
   return (
     <div className="overflow-hidden rounded-3xl border border-white/10 bg-slate-950">
-      <div className={`${compact ? "h-56" : "h-[320px] md:h-[420px]"} relative bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800`}>
+      <div
+        className={`${compact ? "h-56" : "h-[320px] md:h-[420px]"} relative bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800`}
+      >
         <svg viewBox="0 0 300 280" className="h-full w-full">
-          <line x1="35" y1="252" x2="265" y2="252" stroke="rgba(255,255,255,.2)" strokeWidth="5" strokeLinecap="round" />
-          {isFloor ? <FloorDemo /> : isHinge ? <HingeDemo /> : isStanding ? <StandingDemo /> : <StandingDemo />}
+          <line
+            x1="35"
+            y1="252"
+            x2="265"
+            y2="252"
+            stroke="rgba(255,255,255,.2)"
+            strokeWidth="5"
+            strokeLinecap="round"
+          />
+          {isFloor ? (
+            <FloorDemo />
+          ) : isHinge ? (
+            <HingeDemo />
+          ) : isStanding ? (
+            <StandingDemo />
+          ) : (
+            <StandingDemo />
+          )}
         </svg>
 
         {!compact && (
           <div className="absolute bottom-4 left-4 right-4 rounded-2xl border border-white/10 bg-slate-950/80 p-3">
-            <p className="text-sm font-bold text-white">{DEMO_TEXT[type] || "Move slowly and stay controlled."}</p>
+            <p className="text-sm font-bold text-white">
+              {DEMO_TEXT[type] || "Move slowly and stay controlled."}
+            </p>
           </div>
         )}
       </div>
     </div>
   );
 }
-
-
 
 function Stat({ label, value }) {
   return (
@@ -880,10 +2072,15 @@ function SetTracker({ totalSets, currentSet, resting }) {
     <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <p className="font-black text-white">Set progress</p>
-        <p className="text-sm text-slate-400">{completedSets} of {totalSets} completed</p>
+        <p className="text-sm text-slate-400">
+          {completedSets} of {totalSets} completed
+        </p>
       </div>
 
-      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${totalSets}, minmax(0, 1fr))` }}>
+      <div
+        className="grid gap-2"
+        style={{ gridTemplateColumns: `repeat(${totalSets}, minmax(0, 1fr))` }}
+      >
         {Array.from({ length: totalSets }, (_, index) => {
           const set = index + 1;
           const done = set < currentSet;
@@ -918,10 +2115,21 @@ function ExerciseInstructions({ exercise }) {
       <p className="mt-2 text-slate-300">{details.description}</p>
 
       <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
-        <div className="rounded-2xl bg-white/[0.04] p-3"><span className="font-bold text-white">Target:</span> {exercise.target}</div>
-        <div className="rounded-2xl bg-white/[0.04] p-3"><span className="font-bold text-white">Level:</span> {exercise.level}</div>
-        <div className="rounded-2xl bg-white/[0.04] p-3"><span className="font-bold text-white">Progression:</span> {exercise.progressionGoal}</div>
-        <div className="rounded-2xl bg-white/[0.04] p-3"><span className="font-bold text-white">Make harder:</span> {exercise.makeHarder}</div>
+        <div className="rounded-2xl bg-white/[0.04] p-3">
+          <span className="font-bold text-white">Target:</span>{" "}
+          {exercise.target}
+        </div>
+        <div className="rounded-2xl bg-white/[0.04] p-3">
+          <span className="font-bold text-white">Level:</span> {exercise.level}
+        </div>
+        <div className="rounded-2xl bg-white/[0.04] p-3">
+          <span className="font-bold text-white">Progression:</span>{" "}
+          {exercise.progressionGoal}
+        </div>
+        <div className="rounded-2xl bg-white/[0.04] p-3">
+          <span className="font-bold text-white">Make harder:</span>{" "}
+          {exercise.makeHarder}
+        </div>
       </div>
 
       <ol className="mt-4 space-y-2 text-sm text-slate-300">
@@ -946,11 +2154,16 @@ function WarmUpCard() {
   return (
     <div className="rounded-[2rem] border border-white/10 bg-slate-900 p-5">
       <h3 className="font-black text-white">6-Minute Warm-Up</h3>
-      <p className="mt-1 text-sm text-slate-400">Do this before every workout. Keep movement controlled and pain-free.</p>
+      <p className="mt-1 text-sm text-slate-400">
+        Do this before every workout. Keep movement controlled and pain-free.
+      </p>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
         {WARM_UP.map(([movement, time]) => (
-          <div key={movement} className="flex items-center justify-between rounded-2xl bg-white/[0.04] px-4 py-3 text-sm">
+          <div
+            key={movement}
+            className="flex items-center justify-between rounded-2xl bg-white/[0.04] px-4 py-3 text-sm"
+          >
             <span className="font-bold text-slate-200">{movement}</span>
             <span className="text-slate-400">{time}</span>
           </div>
@@ -966,34 +2179,58 @@ function WorkoutOverview({ weeklyPlan, day, plan, progress, completed }) {
       <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="font-semibold text-emerald-400">{weeklyPlan.title}</p>
-          <h2 className="text-3xl font-black">{day}: {plan.title}</h2>
+          <h2 className="text-3xl font-black">
+            {day}: {plan.title}
+          </h2>
           <p className="mt-1 text-slate-300">{plan.focus}</p>
-          <p className="mt-2 text-sm text-slate-500">Built for week starting {weeklyPlan.weekStart}. New shuffle every Monday.</p>
+          <p className="mt-2 text-sm text-slate-500">
+            Built for week starting {weeklyPlan.weekStart}. New shuffle every
+            Monday.
+          </p>
         </div>
-        <div className="text-sm text-slate-400">{plan.exercises.length} exercises • {getWorkoutLengthLabel(plan)} • {getTotalSets(plan)} sets • about 20 to 25 min</div>
+        <div className="text-sm text-slate-400">
+          {plan.exercises.length} exercises • {getWorkoutLengthLabel(plan)} •{" "}
+          {getTotalSets(plan)} sets • about 20 to 25 min
+        </div>
       </div>
 
       <div className="mb-5 h-3 overflow-hidden rounded-full bg-slate-800">
-        <div className="h-full bg-emerald-400" style={{ width: `${progress}%` }} />
+        <div
+          className="h-full bg-emerald-400"
+          style={{ width: `${progress}%` }}
+        />
       </div>
 
       <div className="space-y-3">
         {plan.exercises.map((item, index) => {
-          const done = completed[getExerciseKey(weeklyPlan.weekStart, day, index)];
+          const done =
+            completed[getExerciseKey(weeklyPlan.weekStart, day, index)];
 
           return (
-            <div key={`${day}-${item.name}`} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+            <div
+              key={`${day}-${item.name}`}
+              className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"
+            >
               <div className="flex items-start gap-3">
-                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-bold ${done ? "bg-emerald-400 text-slate-950" : "bg-white/10 text-slate-300"}`}>
+                <div
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-bold ${done ? "bg-emerald-400 text-slate-950" : "bg-white/10 text-slate-300"}`}
+                >
                   {done ? <CheckCircle2 size={18} /> : index + 1}
                 </div>
                 <div>
                   <div className="mb-1 flex flex-wrap gap-2">
-                    <span className="rounded-full bg-emerald-400/10 px-2 py-0.5 text-xs font-bold text-emerald-200">{item.slot}</span>
-                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs font-bold text-slate-300">{item.level}</span>
+                    <span className="rounded-full bg-emerald-400/10 px-2 py-0.5 text-xs font-bold text-emerald-200">
+                      {item.slot}
+                    </span>
+                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs font-bold text-slate-300">
+                      {item.level}
+                    </span>
                   </div>
                   <h3 className="font-bold">{item.name}</h3>
-                  <p className="text-sm text-slate-400">{item.sets} sets × {item.reps} • Rest {item.rest}s • {item.equipment}</p>
+                  <p className="text-sm text-slate-400">
+                    {item.sets} sets × {item.reps} • Rest {item.rest}s •{" "}
+                    {item.equipment}
+                  </p>
                 </div>
               </div>
             </div>
@@ -1012,7 +2249,7 @@ function DayPicker({ selectedDay, weeklyPlan, completed, onChooseDay }) {
       </div>
 
       <div className="space-y-2">
-        {DAYS.map(day => {
+        {DAYS.map((day) => {
           const dayProgress = getDayProgress(weeklyPlan, day, completed);
           const active = selectedDay === day;
           const plan = getDayPlan(weeklyPlan, day);
@@ -1030,8 +2267,15 @@ function DayPicker({ selectedDay, weeklyPlan, completed, onChooseDay }) {
             >
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="font-black">{day}{day === "Saturday" ? " Optional" : ""}</p>
-                  <p className={`text-sm ${active ? "text-slate-800" : "text-slate-400"}`}>{plan.title}</p>
+                  <p className="font-black">
+                    {day}
+                    {day === "Saturday" ? " Optional" : ""}
+                  </p>
+                  <p
+                    className={`text-sm ${active ? "text-slate-800" : "text-slate-400"}`}
+                  >
+                    {plan.title}
+                  </p>
                 </div>
                 <p className="font-black">{dayProgress}%</p>
               </div>
@@ -1043,7 +2287,13 @@ function DayPicker({ selectedDay, weeklyPlan, completed, onChooseDay }) {
   );
 }
 
-function ExerciseTimerCard({ totalSeconds, leftSeconds, isRunning, onStart, onReset }) {
+function ExerciseTimerCard({
+  totalSeconds,
+  leftSeconds,
+  isRunning,
+  onStart,
+  onReset,
+}) {
   if (!totalSeconds) return null;
   const isDone = leftSeconds === 0;
 
@@ -1052,13 +2302,26 @@ function ExerciseTimerCard({ totalSeconds, leftSeconds, isRunning, onStart, onRe
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-bold text-emerald-200">Exercise timer</p>
-          <p className="text-4xl font-black text-white">{formatTime(leftSeconds)}</p>
+          <p className="text-4xl font-black text-white">
+            {formatTime(leftSeconds)}
+          </p>
         </div>
         <div className="flex gap-2">
-          <button type="button" onClick={onStart} disabled={isRunning} className="rounded-2xl bg-emerald-400 px-4 py-3 font-black text-slate-950 disabled:opacity-50">
+          <button
+            type="button"
+            onClick={onStart}
+            disabled={isRunning}
+            className="rounded-2xl bg-emerald-400 px-4 py-3 font-black text-slate-950 disabled:opacity-50"
+          >
             {isDone ? "Restart" : isRunning ? "Running" : "Start"}
           </button>
-          <button type="button" onClick={onReset} className="rounded-2xl bg-white/10 px-4 py-3 font-bold text-white hover:bg-white/20">Reset</button>
+          <button
+            type="button"
+            onClick={onReset}
+            className="rounded-2xl bg-white/10 px-4 py-3 font-bold text-white hover:bg-white/20"
+          >
+            Reset
+          </button>
         </div>
       </div>
     </div>
@@ -1087,30 +2350,57 @@ function WorkoutSession({
   onBack,
   onNext,
   onStartExerciseTimer,
-  onResetExerciseTimer
+  onResetExerciseTimer,
 }) {
   return (
     <main className="rounded-[2rem] border border-white/10 bg-slate-900 p-5 md:p-6">
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <p className="font-semibold text-emerald-400">{weeklyPlan.name} • {day} • Exercise {exerciseIndex + 1} of {totalExercises}</p>
+          <p className="font-semibold text-emerald-400">
+            {weeklyPlan.name} • {day} • Exercise {exerciseIndex + 1} of{" "}
+            {totalExercises}
+          </p>
           <h2 className="text-2xl font-black md:text-4xl">{exercise.name}</h2>
-          <p className="mt-1 text-slate-300">Set {setNumber} of {exercise.sets} • Target: {exercise.reps}</p>
+          <p className="mt-1 text-slate-300">
+            Set {setNumber} of {exercise.sets} • Target: {exercise.reps}
+          </p>
           <p className="mt-2 text-xs font-bold text-slate-500">{wakeStatus}</p>
         </div>
-        <button type="button" onClick={onExit} className="rounded-2xl bg-white/10 p-3 hover:bg-white/20"><X size={20} /></button>
+        <button
+          type="button"
+          onClick={onExit}
+          className="rounded-2xl bg-white/10 p-3 hover:bg-white/20"
+        >
+          <X size={20} />
+        </button>
       </div>
 
       {resting ? (
         <div className="space-y-4">
           <div className="rounded-[2rem] bg-emerald-400 p-8 text-center text-slate-950">
-            <div className="flex items-center justify-center gap-2 text-xl font-black"><Timer /> Rest</div>
-            <p className="mt-2 font-bold">{restInfo?.completed || "Set complete"}</p>
-            <div className="mt-3 text-7xl font-black">{formatTime(restLeft)}</div>
+            <div className="flex items-center justify-center gap-2 text-xl font-black">
+              <Timer /> Rest
+            </div>
+            <p className="mt-2 font-bold">
+              {restInfo?.completed || "Set complete"}
+            </p>
+            <div className="mt-3 text-7xl font-black">
+              {formatTime(restLeft)}
+            </div>
             <p className="mt-2 font-bold">{restInfo?.next || "Next set"}</p>
-            <button type="button" onClick={onSkipRest} className="mt-5 rounded-2xl bg-slate-950 px-5 py-3 font-black text-white">Skip Rest</button>
+            <button
+              type="button"
+              onClick={onSkipRest}
+              className="mt-5 rounded-2xl bg-slate-950 px-5 py-3 font-black text-white"
+            >
+              Skip Rest
+            </button>
           </div>
-          <SetTracker totalSets={exercise.sets} currentSet={setNumber} resting={resting} />
+          <SetTracker
+            totalSets={exercise.sets}
+            currentSet={setNumber}
+            resting={resting}
+          />
           <ExerciseInstructions exercise={exercise} />
         </div>
       ) : (
@@ -1118,511 +2408,67 @@ function WorkoutSession({
           <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
             <MiniAnimation type={exercise.type} playing={isPlaying} />
             <div className="space-y-4">
-              <SetTracker totalSets={exercise.sets} currentSet={setNumber} resting={resting} />
-              <ExerciseTimerCard totalSeconds={exerciseTimerTotal} leftSeconds={exerciseTimerLeft} isRunning={exerciseTimerRunning} onStart={onStartExerciseTimer} onReset={onResetExerciseTimer} />
+              <SetTracker
+                totalSets={exercise.sets}
+                currentSet={setNumber}
+                resting={resting}
+              />
+              <ExerciseTimerCard
+                totalSeconds={exerciseTimerTotal}
+                leftSeconds={exerciseTimerLeft}
+                isRunning={exerciseTimerRunning}
+                onStart={onStartExerciseTimer}
+                onReset={onResetExerciseTimer}
+              />
               <ExerciseInstructions exercise={exercise} />
             </div>
           </div>
           <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-            <button type="button" onClick={onTogglePlay} className="flex items-center justify-center gap-2 rounded-2xl bg-white/10 p-4 font-black hover:bg-white/20">
-              {isPlaying ? <Pause size={18} /> : <Play size={18} />}{isPlaying ? "Pause" : "Play"}
+            <button
+              type="button"
+              onClick={onTogglePlay}
+              className="flex items-center justify-center gap-2 rounded-2xl bg-white/10 p-4 font-black hover:bg-white/20"
+            >
+              {isPlaying ? <Pause size={18} /> : <Play size={18} />}
+              {isPlaying ? "Pause" : "Play"}
             </button>
-            <button type="button" onClick={onCompleteSet} className="rounded-2xl bg-emerald-400 p-4 font-black text-slate-950">Complete Set</button>
+            <button
+              type="button"
+              onClick={onCompleteSet}
+              className="rounded-2xl bg-emerald-400 p-4 font-black text-slate-950"
+            >
+              Complete Set
+            </button>
           </div>
         </>
       )}
 
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <button type="button" onClick={onBack} disabled={exerciseIndex === 0} className="flex items-center justify-center gap-2 rounded-2xl bg-white/10 p-3 font-bold disabled:opacity-40"><ChevronLeft size={18} /> Back</button>
-        <button type="button" onClick={onNext} disabled={exerciseIndex === totalExercises - 1} className="flex items-center justify-center gap-2 rounded-2xl bg-white/10 p-3 font-bold disabled:opacity-40">Next <ChevronRight size={18} /></button>
+        <button
+          type="button"
+          onClick={onBack}
+          disabled={exerciseIndex === 0}
+          className="flex items-center justify-center gap-2 rounded-2xl bg-white/10 p-3 font-bold disabled:opacity-40"
+        >
+          <ChevronLeft size={18} /> Back
+        </button>
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={exerciseIndex === totalExercises - 1}
+          className="flex items-center justify-center gap-2 rounded-2xl bg-white/10 p-3 font-bold disabled:opacity-40"
+        >
+          Next <ChevronRight size={18} />
+        </button>
       </div>
     </main>
-  );
-}
-
-
-function WorkoutDashboard() {
-  const wakeLockRef = useRef(null);
-  const [weeklyPlan, setWeeklyPlan] = useState(() => buildWeeklyPlan(getWeekStartKey(), "initial"));
-  const [selectedDay, setSelectedDay] = useState(getRecommendedDay());
-  const [started, setStarted] = useState(false);
-  const [exerciseIndex, setExerciseIndex] = useState(0);
-  const [setNumber, setSetNumber] = useState(1);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [resting, setResting] = useState(false);
-  const [restLeft, setRestLeft] = useState(0);
-  const [restEndAt, setRestEndAt] = useState(null);
-  const [completed, setCompleted] = useState({});
-  const [restInfo, setRestInfo] = useState(null);
-  const [progressLoaded, setProgressLoaded] = useState(false);
-  const [syncStatus, setSyncStatus] = useState("Loading progress...");
-  const [exerciseTimerEndAt, setExerciseTimerEndAt] = useState(null);
-  const [exerciseTimerLeft, setExerciseTimerLeft] = useState(0);
-  const [wakeStatus, setWakeStatus] = useState("Screen wake lock ready.");
-
-  const dayPlan = getDayPlan(weeklyPlan, selectedDay);
-  const exercise = dayPlan.exercises[exerciseIndex] || dayPlan.exercises[0];
-  const exerciseTimerTotal = getExerciseTimerSeconds(exercise);
-  const exerciseTimerRunning = Boolean(exerciseTimerEndAt && exerciseTimerLeft > 0);
-  const progress = getDayProgress(weeklyPlan, selectedDay, completed);
-  const currentWeekProgress = useMemo(() => getWeekProgress(weeklyPlan, completed), [weeklyPlan, completed]);
-  const nextShuffleDate = useMemo(() => {
-    const [year, month, day] = weeklyPlan.weekStart.split("-").map(Number);
-    const date = new Date(year, month - 1, day);
-    date.setDate(date.getDate() + 7);
-    return localDateKey(date);
-  }, [weeklyPlan.weekStart]);
-
-  async function loadProgress() {
-    if (!supabase) return;
-
-    setSyncStatus("Loading progress...");
-
-    const {
-      data: { user },
-      error: userError
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      setSyncStatus("Could not load user.");
-      setProgressLoaded(true);
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("workout_progress")
-      .select("data")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (error) {
-      setSyncStatus("Could not load saved progress. Check Supabase table/RLS.");
-      setProgressLoaded(true);
-      return;
-    }
-
-    const currentWeekStart = getWeekStartKey();
-    const saved = data?.data || {};
-    const savedPlan = saved.weeklyPlan;
-    const hasCurrentPlan = savedPlan?.weekStart === currentWeekStart && savedPlan?.days;
-    const activePlan = hasCurrentPlan ? savedPlan : buildWeeklyPlan(currentWeekStart, user.id);
-    const activeCompleted = hasCurrentPlan ? saved.completed || {} : {};
-    const session = hasCurrentPlan ? saved.session || {} : {};
-    const today = localDateKey();
-
-    setWeeklyPlan(activePlan);
-    setCompleted(activeCompleted);
-
-    if (session.date === today && session.started) {
-      const sessionDay = DAYS.includes(session.selectedDay) ? session.selectedDay : getRecommendedDay();
-      const sessionPlan = getDayPlan(activePlan, sessionDay);
-      const safeExerciseIndex = Math.min(Math.max(Number(session.exerciseIndex) || 0, 0), sessionPlan.exercises.length - 1);
-      const safeSetNumber = Math.max(Number(session.setNumber) || 1, 1);
-
-      setSelectedDay(sessionDay);
-      setStarted(true);
-      setExerciseIndex(safeExerciseIndex);
-      setSetNumber(safeSetNumber);
-      setResting(Boolean(session.resting));
-      setRestEndAt(session.restEndAt || null);
-      setRestInfo(session.restInfo || null);
-      setExerciseTimerEndAt(session.exerciseTimerEndAt || null);
-    } else {
-      setSelectedDay(getRecommendedDay());
-      setStarted(false);
-      setExerciseIndex(0);
-      setSetNumber(1);
-      setResting(false);
-      setRestEndAt(null);
-      setRestLeft(0);
-      setRestInfo(null);
-      setExerciseTimerEndAt(null);
-    }
-
-    setProgressLoaded(true);
-    setSyncStatus(hasCurrentPlan ? "Progress loaded" : "New Monday plan generated");
-  }
-
-  useEffect(() => {
-    loadProgress();
-  }, []);
-
-  useEffect(() => {
-    function handleFocus() {
-      if (!started && !resting) loadProgress();
-    }
-
-    window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
-  }, [started, resting]);
-
-  useEffect(() => {
-    if (!progressLoaded || !supabase) return undefined;
-
-    setSyncStatus("Saving...");
-
-    const saveTimer = window.setTimeout(async () => {
-      const {
-        data: { user },
-        error: userError
-      } = await supabase.auth.getUser();
-
-      if (userError || !user) {
-        setSyncStatus("Could not save progress.");
-        return;
-      }
-
-      const { error } = await supabase.from("workout_progress").upsert(
-        {
-          user_id: user.id,
-          data: {
-            weeklyPlan,
-            completed,
-            selectedDay,
-            session: {
-              date: localDateKey(),
-              started,
-              selectedDay,
-              exerciseIndex,
-              setNumber,
-              resting,
-              restEndAt,
-              restInfo,
-              exerciseTimerEndAt
-            }
-          },
-          updated_at: new Date().toISOString()
-        },
-        { onConflict: "user_id" }
-      );
-
-      setSyncStatus(error ? `Save failed: ${error.message}` : "Saved");
-    }, 600);
-
-    return () => window.clearTimeout(saveTimer);
-  }, [weeklyPlan, completed, selectedDay, started, exerciseIndex, setNumber, resting, restEndAt, restInfo, exerciseTimerEndAt, progressLoaded]);
-
-  useEffect(() => {
-    if (!resting || !restEndAt) return undefined;
-
-    function tick() {
-      const secondsLeft = Math.max(0, Math.ceil((Number(restEndAt) - Date.now()) / 1000));
-      setRestLeft(secondsLeft);
-
-      if (secondsLeft <= 0) {
-        setResting(false);
-        setRestEndAt(null);
-        setIsPlaying(true);
-      }
-    }
-
-    tick();
-    const timerId = window.setInterval(tick, 500);
-    return () => window.clearInterval(timerId);
-  }, [resting, restEndAt]);
-
-  useEffect(() => {
-    if (!exerciseTimerEndAt) {
-      setExerciseTimerLeft(exerciseTimerTotal);
-      return undefined;
-    }
-
-    function tick() {
-      const secondsLeft = Math.max(0, Math.ceil((Number(exerciseTimerEndAt) - Date.now()) / 1000));
-      setExerciseTimerLeft(secondsLeft);
-
-      if (secondsLeft <= 0) setExerciseTimerEndAt(null);
-    }
-
-    tick();
-    const timerId = window.setInterval(tick, 500);
-    return () => window.clearInterval(timerId);
-  }, [exerciseTimerEndAt, exerciseTimerTotal]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function requestWakeLock() {
-      if (!started) return;
-
-      if (!("wakeLock" in navigator)) {
-        setWakeStatus("Screen wake lock is not supported on this browser.");
-        return;
-      }
-
-      try {
-        if (wakeLockRef.current) return;
-        const lock = await navigator.wakeLock.request("screen");
-
-        if (cancelled) {
-          await lock.release();
-          return;
-        }
-
-        wakeLockRef.current = lock;
-        setWakeStatus("Screen wake lock active.");
-
-        lock.addEventListener("release", () => {
-          wakeLockRef.current = null;
-          setWakeStatus("Screen wake lock released.");
-        });
-      } catch {
-        setWakeStatus("Could not keep screen awake. Check browser permissions.");
-      }
-    }
-
-    async function releaseWakeLock() {
-      if (wakeLockRef.current) {
-        await wakeLockRef.current.release();
-        wakeLockRef.current = null;
-      }
-    }
-
-    requestWakeLock();
-
-    function handleVisibilityChange() {
-      if (document.visibilityState === "visible" && started) requestWakeLock();
-    }
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      cancelled = true;
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      releaseWakeLock();
-    };
-  }, [started]);
-
-  function startRest(seconds, info) {
-    const restSeconds = Math.max(0, Number(seconds) || 0);
-    const endAt = Date.now() + restSeconds * 1000;
-
-    setRestInfo(info);
-    setRestEndAt(endAt);
-    setRestLeft(restSeconds);
-    setResting(true);
-    setIsPlaying(false);
-    setExerciseTimerEndAt(null);
-  }
-
-  function startExerciseTimer() {
-    if (!exerciseTimerTotal) return;
-    setExerciseTimerLeft(exerciseTimerTotal);
-    setExerciseTimerEndAt(Date.now() + exerciseTimerTotal * 1000);
-  }
-
-  function resetExerciseTimer() {
-    setExerciseTimerEndAt(null);
-    setExerciseTimerLeft(exerciseTimerTotal);
-  }
-
-  function resetSession() {
-    setStarted(false);
-    setExerciseIndex(0);
-    setSetNumber(1);
-    setResting(false);
-    setRestEndAt(null);
-    setRestLeft(0);
-    setIsPlaying(true);
-    setRestInfo(null);
-    setExerciseTimerEndAt(null);
-  }
-
-  function chooseDay(day) {
-    setSelectedDay(day);
-    resetSession();
-  }
-
-  function startWorkout() {
-    setStarted(true);
-    setExerciseIndex(0);
-    setSetNumber(1);
-    setResting(false);
-    setRestEndAt(null);
-    setRestLeft(0);
-    setIsPlaying(true);
-    setRestInfo(null);
-    setExerciseTimerEndAt(null);
-  }
-
-  function finishSet() {
-    if (setNumber < exercise.sets) {
-      const nextSet = setNumber + 1;
-      setSetNumber(nextSet);
-      startRest(exercise.rest, {
-        completed: `Set ${setNumber} of ${exercise.sets} complete`,
-        next: `Next: Set ${nextSet} of ${exercise.sets}`
-      });
-      return;
-    }
-
-    const completedKey = getExerciseKey(weeklyPlan.weekStart, selectedDay, exerciseIndex);
-    const nextCompleted = { ...completed, [completedKey]: true };
-    setCompleted(nextCompleted);
-    setExerciseTimerEndAt(null);
-
-    if (exerciseIndex < dayPlan.exercises.length - 1) {
-      const nextExercise = dayPlan.exercises[exerciseIndex + 1];
-      setExerciseIndex(index => index + 1);
-      setSetNumber(1);
-      startRest(exercise.rest, {
-        completed: `${exercise.name} complete`,
-        next: `Next: ${nextExercise.name}`
-      });
-      return;
-    }
-
-    resetSession();
-  }
-
-  function goNext() {
-    if (exerciseIndex >= dayPlan.exercises.length - 1) return;
-    setExerciseIndex(index => index + 1);
-    setSetNumber(1);
-    setResting(false);
-    setRestEndAt(null);
-    setRestLeft(0);
-    setIsPlaying(true);
-    setRestInfo(null);
-    setExerciseTimerEndAt(null);
-  }
-
-  function goBack() {
-    if (exerciseIndex <= 0) return;
-    setExerciseIndex(index => index - 1);
-    setSetNumber(1);
-    setResting(false);
-    setRestEndAt(null);
-    setRestLeft(0);
-    setIsPlaying(true);
-    setRestInfo(null);
-    setExerciseTimerEndAt(null);
-  }
-
-  function resetProgress() {
-    const confirmReset = window.confirm("Are you sure you want to reset your workout progress for this generated plan? This cannot be undone.");
-    if (!confirmReset) return;
-    setCompleted({});
-    setSelectedDay(getRecommendedDay());
-    resetSession();
-  }
-
-  if (!progressLoaded) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
-        <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900 px-5 py-4">
-          <Loader2 className="animate-spin" />
-          <span className="font-bold">Loading your random plan...</span>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-slate-950 p-4 text-white md:p-8">
-      <div className="mx-auto max-w-7xl space-y-6">
-        {!started ? (
-          <>
-            <section className="overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/50 p-6 shadow-2xl md:p-8">
-              <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-                <div>
-                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm text-slate-200">
-                    <Dumbbell size={16} /> New random workouts every Monday
-                  </div>
-                  <h1 className="max-w-3xl text-4xl font-black tracking-tight md:text-6xl">Ezra&apos;s Workout App</h1>
-                  <p className="mt-4 max-w-xl text-slate-300">
-                    Every Monday, the app builds fresh random workouts. Monday pulls from the Push library, Wednesday from Pull, Friday from Legs, and Saturday from Full Body.
-                  </p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <div className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-bold text-slate-300">Sync: {syncStatus}</div>
-                    <div className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-bold text-slate-300">Plan starts: {weeklyPlan.weekStart}</div>
-                    <div className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-bold text-slate-300">Next shuffle: {nextShuffleDate}</div>
-                  </div>
-
-                  <div className="mt-6 grid max-w-xl grid-cols-3 gap-3">
-                    <Stat label="This plan" value={`${currentWeekProgress}%`} />
-                    <Stat label="Today" value={selectedDay} />
-                    <Stat label="Exercises" value="4-6" />
-                  </div>
-
-                  <button type="button" onClick={startWorkout} className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-emerald-400 px-6 py-4 font-black text-slate-950 shadow-lg shadow-emerald-400/20 transition hover:scale-[1.02]">
-                    <Play size={20} /> Start {selectedDay}: {dayPlan.title}
-                  </button>
-                </div>
-
-                <div className="rounded-[2rem] border border-white/10 bg-slate-950/70 p-4">
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm text-slate-400">Selected workout</p>
-                      <h2 className="text-2xl font-black">{selectedDay}: {dayPlan.title}</h2>
-                    </div>
-                    <div className="rounded-full bg-emerald-400 px-3 py-1 text-sm font-black text-slate-950">{progress}%</div>
-                  </div>
-                  <MiniAnimation type={dayPlan.exercises[0].type} playing={true} compact />
-                </div>
-              </div>
-            </section>
-
-            <section className="grid gap-6 xl:grid-cols-[1fr_380px]">
-              <main className="space-y-6">
-                <WarmUpCard />
-                <WorkoutOverview weeklyPlan={weeklyPlan} day={selectedDay} plan={dayPlan} progress={progress} completed={completed} />
-              </main>
-
-              <aside className="space-y-4">
-                <DayPicker selectedDay={selectedDay} weeklyPlan={weeklyPlan} completed={completed} onChooseDay={chooseDay} />
-                <div className="rounded-[2rem] border border-white/10 bg-slate-900 p-4">
-                  <h3 className="font-black">Random workout logic</h3>
-                  <p className="mt-3 text-sm text-slate-300">
-                    Monday picks 4 to 6 random exercises from the Push library. Wednesday uses Pull, Friday uses Legs, and Saturday uses the Full Body library.
-                  </p>
-                </div>
-                <button type="button" onClick={resetProgress} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 font-bold hover:bg-white/10">
-                  <RotateCcw size={18} /> Reset Progress
-                </button>
-              </aside>
-            </section>
-          </>
-        ) : (
-          <WorkoutSession
-            weeklyPlan={weeklyPlan}
-            day={selectedDay}
-            exercise={exercise}
-            exerciseIndex={exerciseIndex}
-            totalExercises={dayPlan.exercises.length}
-            setNumber={setNumber}
-            resting={resting}
-            restLeft={restLeft}
-            restInfo={restInfo}
-            isPlaying={isPlaying}
-            exerciseTimerTotal={exerciseTimerTotal}
-            exerciseTimerLeft={exerciseTimerLeft}
-            exerciseTimerRunning={exerciseTimerRunning}
-            wakeStatus={wakeStatus}
-            onExit={resetSession}
-            onTogglePlay={() => setIsPlaying(value => !value)}
-            onCompleteSet={finishSet}
-            onSkipRest={() => {
-              setResting(false);
-              setRestEndAt(null);
-              setRestLeft(0);
-              setIsPlaying(true);
-            }}
-            onBack={goBack}
-            onNext={goNext}
-            onStartExerciseTimer={startExerciseTimer}
-            onResetExerciseTimer={resetExerciseTimer}
-          />
-        )}
-      </div>
-    </div>
   );
 }
 
 export default function WorkoutApp() {
   return (
     <AuthGate>
-      <WorkoutDashboard />
+      <HomePage />
     </AuthGate>
   );
 }
